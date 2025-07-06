@@ -4,3 +4,4 @@ src
 test
 deno.json
 deno.lock
+.github

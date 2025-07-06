@@ -1,6 +1,6 @@
 {
   "name": "rhodium",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A TypeScript `Promise` wrapper that adds syntax sugar.",
   "homepage": "https://github.com/iluha168/rhodium#readme",
   "bugs": {
@@ -17,11 +17,9 @@
   "types": "dist/mod.d.mts",
   "scripts": {
     "test": "deno test",
-
     "fmt": "cd ./test && deno fmt $FMT_OPTIONS && cd ..",
     "fmt:check": "FMT_OPTIONS=--check npm run fmt",
     "fmt:watch": "FMT_OPTIONS=--watch npm run fmt",
-    
     "check": "npm run fmt:check && npm run test",
     "clean": "rm -rf dist",
     "build": "npm run clean && tsc",

@@ -1,3 +1,8 @@
+/**
+ * @module
+ * The definition of {@linkcode Rhodium}.
+ */
+
 type ifNever<T, THEN, ELSE = never> = [never, T] extends [T, never] ? THEN : ELSE
 	
 type NeverIfOneElementIsNever<Arr> = "yes" extends {
@@ -266,5 +271,5 @@ export class Rhodium<R, E> {
 		return new Rhodium(this.promise.finally(onfinally))
 	}
 
-	[Symbol.toStringTag] = Rhodium.name
+	[Symbol.toStringTag] = "Rhodium"
 }
