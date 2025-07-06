@@ -22,15 +22,15 @@ It has a type of `Rhodium<PossibleResolutions, PossibleErrors>`.
 Rhodium keeps track of all errors a `Rhodium` chain may reject with, if used correctly.
 ```ts
 Rhodium
-	.try(
-        chance => chance > 0.5
-			? "success"
-			: Rhodium.reject("error"),
-		Math.random(),
-	)
-    .then(data => data /* <? "success" */)
-	.catch(e => e /* <? "error" */ )
-    .then(data => data /* <? "success" | "error" */)
+  .try(
+    chance => chance > 0.5
+      ? "success"
+      : Rhodium.reject("error"),
+    Math.random(),
+  )
+  .then(data => data /* <? "success" */)
+  .catch(e => e /* <? "error" */ )
+  .then(data => data /* <? "success" | "error" */)
 ```
 
 #### Caveats
