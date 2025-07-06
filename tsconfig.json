@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
         "lib": ["ESNext"],
+        "target": "esnext",
 
         "outDir": "dist",
 
