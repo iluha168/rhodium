@@ -22,10 +22,11 @@
     "fmt:watch": "FMT_OPTIONS=--watch npm run fmt",
     "check": "npm run fmt:check && npm run test",
     "clean": "rm -rf dist",
-    "build": "npm run clean && tsc",
+    "build": "npm run clean && tsc && esbuild --bundle --minify --format=esm --platform=node --target=node24 src/mod.mts --outfile=dist/mod.mjs",
     "prepublishOnly": "npm run check && npm run build"
   },
   "devDependencies": {
+    "esbuild": "^0.25.5",
     "typescript": "^5.8.3"
   }
 }

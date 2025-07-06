@@ -8,7 +8,11 @@
         "module": "commonjs",
         "strict": true,
         "declaration": true,
+        "emitDeclarationOnly": true,
         "esModuleInterop": true,
+        "allowImportingTsExtensions": true,
+        "allowArbitraryExtensions": false,
+        "allowJs": false,
     },
     "include": [
         "./src",

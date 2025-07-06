@@ -18,6 +18,7 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
+        "npm:esbuild@~0.25.5",
         "npm:typescript@^5.8.3"
       ]
     }
