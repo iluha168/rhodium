@@ -7,7 +7,7 @@ It has a type of `Rhodium<PossibleResolutions, PossibleErrors>`.
 - [Features](#features)
   - [Error tracking](#error-tracking)
     - [Caveats](#caveats)
-  - [The `Errored<T>` type](#the-erroredt-type)
+    - [The `Errored<T>` type](#the-erroredt-type)
 
 
 ## Interoperability with `Promise`
@@ -38,7 +38,7 @@ Rhodium
 - Other **`PromiseLike`** objects returned inside the chain automatically change the **error type to `unknown`**. We can never be sure what type they reject, if any.
 - **`async` callbacks** lose type information by `await`ing. Therefore, they also **cause the error type to become `unknown`**.
 
-### The `Errored<T>` type
+#### The `Errored<T>` type
 Similarly to `Awaited<T>`, which returns the resolution type,
 `Errored<T>` returns the error type.
 ```ts

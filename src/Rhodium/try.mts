@@ -1,0 +1,21 @@
+import { Rhodium } from "./index.mts"
+import type { ToRhodium } from "./terminology.d.mts"
+
+/**
+ * Takes a callback of any kind (returns or throws, synchronously or asynchronously) and wraps its result in a Rhodium.
+ * @param callbackFn A function that is called synchronously. It can do anything: either return a value, throw an error, or return a promise.
+ * @param args Additional arguments, that will be passed to the callback.
+ * @returns A Rhodium that is:
+ * - Already fulfilled, if the callback synchronously returns a value.
+ * - Already rejected, if the callback synchronously throws an error.
+ * - Asynchronously fulfilled or rejected, if the callback returns a {@link PromiseLike promise-like}.
+ */
+export function Try<
+	const P,
+	const U extends unknown[] = [],
+>(
+	callbackFn: (...args: NoInfer<U>) => P,
+	...args: U
+): NoInfer<ToRhodium<P>> {
+	return new Rhodium(Promise.try(callbackFn, ...args)) as ToRhodium<P>
+}

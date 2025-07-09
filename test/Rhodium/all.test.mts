@@ -1,5 +1,5 @@
 import { assertEquals, assertRejects } from "jsr:@std/assert"
-import { Rhodium } from "../../src/mod.mts"
+import { Rhodium } from "@/index.mts"
 
 Deno.test("all never reject", async () => {
 	const result: ["res1", "res2"] = await Rhodium.all([

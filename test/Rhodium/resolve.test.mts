@@ -1,5 +1,5 @@
 import { assertEquals, assertStrictEquals } from "jsr:@std/assert"
-import { Rhodium } from "../../src/mod.mts"
+import { Rhodium } from "@/index.mts"
 
 Deno.test("resolve void", async () => {
 	const result: void = await Rhodium.resolve()

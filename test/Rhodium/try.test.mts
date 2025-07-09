@@ -1,5 +1,5 @@
 import { assertEquals } from "jsr:@std/assert"
-import { Rhodium } from "../../src/mod.mts"
+import { Rhodium } from "@/index.mts"
 
 Deno.test("collapses all possible return types", async () => {
 	const getPromise = () => {
