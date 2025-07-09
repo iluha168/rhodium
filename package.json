@@ -1,34 +1,34 @@
 {
-  "name": "rhodium",
-  "version": "0.1.2",
-  "description": "A TypeScript `Promise` wrapper that adds syntax sugar.",
-  "homepage": "https://github.com/iluha168/rhodium#readme",
-  "bugs": {
-    "url": "https://github.com/iluha168/rhodium/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/iluha168/rhodium.git"
-  },
-  "license": "MIT",
-  "author": "iluha168",
-  "type": "module",
-  "main": "dist/mod.mjs",
-  "types": "dist/mod.d.mts",
-  "scripts": {
-    "test": "deno test",
-	"lint": "deno lint",
-	"lint:watch": "deno lint --watch --fix",
-    "fmt": "deno fmt",
-    "fmt:check": "npm run fmt -- --check",
-    "fmt:watch": "npm run fmt -- --watch",
-    "check": "npm run fmt:check && deno lint && npm run test",
-    "clean": "rm -rf dist",
-    "build": "npm run clean && tsc && esbuild --bundle --minify --format=esm --platform=node --target=node24 src/mod.mts --outfile=dist/mod.mjs",
-    "prepublishOnly": "npm run check && npm run build"
-  },
-  "devDependencies": {
-    "esbuild": "^0.25.5",
-    "typescript": "^5.8.3"
-  }
+	"name": "rhodium",
+	"version": "0.1.2",
+	"description": "A TypeScript `Promise` wrapper that adds syntax sugar.",
+	"homepage": "https://github.com/iluha168/rhodium#readme",
+	"bugs": {
+		"url": "https://github.com/iluha168/rhodium/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/iluha168/rhodium.git"
+	},
+	"license": "MIT",
+	"author": "iluha168",
+	"type": "module",
+	"main": "dist/mod.mjs",
+	"types": "dist/mod.d.mts",
+	"scripts": {
+		"test": "deno test",
+		"lint": "deno lint",
+		"lint:watch": "deno lint --watch --fix",
+		"fmt": "deno fmt",
+		"fmt:check": "npm run fmt -- --check",
+		"fmt:watch": "npm run fmt -- --watch",
+		"check": "npm run fmt:check && deno lint && npm run test",
+		"clean": "rm -rf dist",
+		"build": "npm run clean && tsc && esbuild --bundle --minify --format=esm --platform=node --target=node24 src/mod.mts --outfile=dist/mod.mjs",
+		"prepublishOnly": "npm run check && npm run build"
+	},
+	"devDependencies": {
+		"esbuild": "^0.25.5",
+		"typescript": "^5.8.3"
+	}
 }

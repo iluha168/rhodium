@@ -1,20 +1,20 @@
 {
-    "compilerOptions": {
-        "lib": ["ESNext"],
-        "target": "esnext",
+	"compilerOptions": {
+		"lib": ["ESNext"],
+		"target": "esnext",
 
-        "outDir": "dist",
+		"outDir": "dist",
 
-        "module": "commonjs",
-        "strict": true,
-        "declaration": true,
-        "emitDeclarationOnly": true,
-        "esModuleInterop": true,
-        "allowImportingTsExtensions": true,
-        "allowArbitraryExtensions": false,
-        "allowJs": false,
-    },
-    "include": [
-        "./src",
-    ],
+		"module": "commonjs",
+		"strict": true,
+		"declaration": true,
+		"emitDeclarationOnly": true,
+		"esModuleInterop": true,
+		"allowImportingTsExtensions": true,
+		"allowArbitraryExtensions": false,
+		"allowJs": false
+	},
+	"include": [
+		"./src"
+	]
 }

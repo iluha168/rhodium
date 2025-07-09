@@ -1,5 +1,5 @@
 import { assertEquals, assertRejects } from "jsr:@std/assert"
-import { Errored, Rhodium } from "../../src/mod.mts"
+import { type Errored, Rhodium } from "../../src/mod.mts"
 
 Deno.test("does nothing with no args", () => {
 	assertRejects(() => {

@@ -3,11 +3,13 @@
  * The definition of {@linkcode Rhodium}.
  */
 
-type ifNever<T, THEN, ELSE = never> = [never, T] extends [T, never] ? THEN : ELSE
-	
+type ifNever<T, THEN, ELSE = never> = [never, T] extends [T, never] ? THEN
+	: ELSE
+
 type NeverIfOneElementIsNever<Arr> = "yes" extends {
 	[Prop in keyof Arr]: ifNever<Arr[Prop], "yes">
-}[keyof Arr & number] ? never : Arr
+}[keyof Arr & number] ? never
+	: Arr
 
 type ToRhodium<T> = T extends Rhodium<any, any> ? T
 	: T extends PromiseLike<infer R> ? Rhodium<Awaited<R>, unknown>
@@ -167,10 +169,12 @@ export class Rhodium<R, E> {
 	static allSettled<const Ps extends Rhodium<any, any>[] | []>(
 		values: Ps,
 	): Rhodium<
-		{ -readonly [P in keyof Ps]: RhodiumSettledResult<
-			Awaited<Ps[P]>,
-			Errored<Ps[P]>
-		> },
+		{
+			-readonly [P in keyof Ps]: RhodiumSettledResult<
+				Awaited<Ps[P]>,
+				Errored<Ps[P]>
+			>
+		},
 		never
 	> {
 		return new Rhodium(Promise.allSettled(values)) as ReturnType<
@@ -206,8 +210,7 @@ export class Rhodium<R, E> {
 		const P,
 		const U extends unknown[] = [],
 	>(
-		callbackFn:
-			| ((...args: NoInfer<U>) => P),
+		callbackFn: (...args: NoInfer<U>) => P,
 		...args: U
 	): NoInfer<ToRhodium<P>> {
 		return new Rhodium(Promise.try(callbackFn, ...args)) as ToRhodium<P>
@@ -216,7 +219,7 @@ export class Rhodium<R, E> {
 	/**
 	 * Attaches callbacks for the resolution and/or rejection of the Rhodium.
 	 * @param onfulfilled The callback to execute when the Rhodium is resolved.
-     * @param onrejected The callback to execute when the Rhodium is rejected.
+	 * @param onrejected The callback to execute when the Rhodium is rejected.
 	 * @returns A Rhodium for the completion of which ever callback is executed.
 	 */
 	then<

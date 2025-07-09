@@ -1,37 +1,37 @@
 name: Publish
 
 on:
-  push:
-    branches:
-      - main
+    push:
+        branches:
+            - main
 
 jobs:
-  publish:
-    runs-on: self-hosted
-    permissions:
-      contents: read
-      packages: write
-      id-token: write # The OIDC ID token is used for authentication with JSR.
-    steps:
-      - uses: actions/checkout@v4
+    publish:
+        runs-on: self-hosted
+        permissions:
+            contents: read
+            packages: write
+            id-token: write # The OIDC ID token is used for authentication with JSR.
+        steps:
+            - uses: actions/checkout@v4
 
-      # Node
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "latest"
-      - run: npm ci
+            # Node
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: "latest"
+            - run: npm ci
 
-      # Deno
-      - uses: denoland/setup-deno@v2
-        with:
-          deno-version: vx.x.x
+            # Deno
+            - uses: denoland/setup-deno@v2
+              with:
+                  deno-version: vx.x.x
 
-      - run: npm run prepublishOnly
-      # Publishing
-      - name: NPM
-        uses: JS-DevTools/npm-publish@v3
-        with:
-          token: ${{ secrets.NPM_TOKEN }}
+            - run: npm run prepublishOnly
+            # Publishing
+            - name: NPM
+              uses: JS-DevTools/npm-publish@v3
+              with:
+                  token: ${{ secrets.NPM_TOKEN }}
 
-      - name: JSR
-        run: npx jsr publish
+            - name: JSR
+              run: npx jsr publish

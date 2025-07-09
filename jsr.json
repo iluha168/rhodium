@@ -1,15 +1,15 @@
 {
-    "name": "@iluha168/rhodium",
-    "version": "0.1.2",
-    "license": "MIT",
-    "exports": "./src/mod.mts",
-    "publish": {
-        "exclude": [
-            "node_modules",
-            ".vscode",
-            "dist",
-            "test",
-            ".github"
-        ]
-    }
+	"name": "@iluha168/rhodium",
+	"version": "0.1.2",
+	"license": "MIT",
+	"exports": "./src/mod.mts",
+	"publish": {
+		"exclude": [
+			"node_modules",
+			".vscode",
+			"dist",
+			"test",
+			".github"
+		]
+	}
 }
