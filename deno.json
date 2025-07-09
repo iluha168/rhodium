@@ -1,0 +1,22 @@
+{
+	"fmt": {
+		"bracePosition": "sameLine",
+		"indentWidth": 4,
+		"newLineKind": "lf",
+		"semiColons": false,
+		"useTabs": true,
+		"exclude": [
+			"*.lock",
+			"*-lock.json",
+			"*.md"
+		]
+	},
+	"lint": {
+		"rules": {
+			"tags": ["recommended", "jsr"],
+			"exclude": [
+				"no-explicit-any"
+			]
+		}
+	}
+}

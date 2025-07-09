@@ -1,9 +1,0 @@
-{
-	"fmt": {
-		"bracePosition": "sameLine",
-		"indentWidth": 4,
-		"newLineKind": "lf",
-		"semiColons": false,
-		"useTabs": true
-	}
-}

@@ -17,10 +17,12 @@
   "types": "dist/mod.d.mts",
   "scripts": {
     "test": "deno test",
-    "fmt": "cd ./test && deno fmt $FMT_OPTIONS && cd ..",
-    "fmt:check": "FMT_OPTIONS=--check npm run fmt",
-    "fmt:watch": "FMT_OPTIONS=--watch npm run fmt",
-    "check": "npm run fmt:check && npm run test",
+	"lint": "deno lint",
+	"lint:watch": "deno lint --watch --fix",
+    "fmt": "deno fmt",
+    "fmt:check": "npm run fmt -- --check",
+    "fmt:watch": "npm run fmt -- --watch",
+    "check": "npm run fmt:check && deno lint && npm run test",
     "clean": "rm -rf dist",
     "build": "npm run clean && tsc && esbuild --bundle --minify --format=esm --platform=node --target=node24 src/mod.mts --outfile=dist/mod.mjs",
     "prepublishOnly": "npm run check && npm run build"
