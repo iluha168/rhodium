@@ -2,31 +2,29 @@ import { assertEquals, assertRejects } from "jsr:@std/assert"
 import { Rhodium } from "@/index.mts"
 
 Deno.test("all never reject", async () => {
-	const result: ["res1", "res2"] = await Rhodium.all([
+	const result: "res1" | "res2" = await Rhodium.any([
 		Rhodium.resolve("res1"),
 		Rhodium.resolve("res2"),
 	])
-	assertEquals(result, ["res1", "res2"])
+	assertEquals(result, "res1")
 })
 
-Deno.test("one always rejects", () => {
-	assertRejects(() => {
-		const result: Rhodium<never, EvalError> = Rhodium.all([
-			Rhodium.resolve("res1"),
-			Rhodium.resolve("res2"),
-			Rhodium.reject(new EvalError()),
-		])
-		return result.promise
-	}, EvalError)
+Deno.test("one always rejects", async () => {
+	const result: Rhodium<"res1" | "res2", never> = Rhodium.any([
+		Rhodium.resolve("res1"),
+		Rhodium.resolve("res2"),
+		Rhodium.reject(new EvalError()),
+	])
+	assertEquals(await result, "res1")
 })
 
 Deno.test("one sometimes rejects", async () => {
-	const result: Rhodium<["res1", "res2", "res3"], "err1"> = Rhodium.all([
+	const result: Rhodium<"res1" | "res2" | "res3", never> = Rhodium.any([
 		Rhodium.resolve("res1"),
 		Rhodium.resolve("res2"),
 		Rhodium.resolve("res3") as Rhodium<"res3", "err1">,
 	])
-	assertEquals(await result, ["res1", "res2", "res3"])
+	assertEquals(await result, "res1")
 })
 
 Deno.test("all always reject", async () => {
@@ -40,7 +38,9 @@ Deno.test("all always reject", async () => {
 	assertEquals(await createPromise(), ["err1", "err2"])
 })
 
-Deno.test("empty array", async () => {
-	const result: Rhodium<[], never> = Rhodium.all([])
-	assertEquals(await result, [])
+Deno.test("empty array", () => {
+	assertRejects(() => {
+		const result: Rhodium<never, []> = Rhodium.any([])
+		return result
+	})
 })
