@@ -6,7 +6,7 @@ Deno.test("reject", () => {
 	const _rejectArg: "no" = "no" satisfies Parameters<typeof reject>[0]
 	assertRejects(() => {
 		reject("no")
-		return rhodium
+		return rhodium.promise
 	})
 })
 

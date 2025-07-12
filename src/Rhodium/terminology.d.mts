@@ -17,3 +17,13 @@ export type ToRhodium<T> = T extends Rhodium<any, any> ? T
 export type Errored<T> = T extends Rhodium<any, infer E> ? E
 	: T extends PromiseLike<any> ? unknown
 	: never
+
+/**
+ * Merges a union of {@link Rhodium Rhodiums} into a single type.
+ * @example ```
+ * type M = Merged<Rhodium<1, never> | Rhodium<never, 2>>
+ * //   ^? M: Rhodium<1, 2>
+ * ```
+ */
+export type Merged<P extends Rhodium<any, any>> = [P] extends
+	[Rhodium<infer R, infer E>] ? Rhodium<R, E> : never

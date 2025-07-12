@@ -41,6 +41,6 @@ Deno.test("all always reject", async () => {
 Deno.test("empty array", () => {
 	assertRejects(() => {
 		const result: Rhodium<never, []> = Rhodium.any([])
-		return result
+		return result.promise
 	})
 })

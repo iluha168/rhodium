@@ -3,7 +3,7 @@
  * The definition of {@linkcode Rhodium}.
  */
 
-import type { ToRhodium } from "./terminology.d.mts"
+import type { Merged, ToRhodium } from "./terminology.d.mts"
 import * as concurrency from "./concurrency.mts"
 import { withResolvers } from "./withResolvers.mts"
 import { Try } from "./try.mts"
@@ -78,7 +78,7 @@ export class Rhodium<R, E> {
 			| ((reason: NoInfer<E>) => P2)
 			| null
 			| undefined,
-	): NoInfer<ToRhodium<P1 | P2>> {
+	): Merged<NoInfer<ToRhodium<P1 | P2>>> {
 		return new Rhodium(
 			this.promise.then(onfulfilled, onrejected),
 		) as ReturnType<
@@ -98,7 +98,7 @@ export class Rhodium<R, E> {
 			| ((reason: NoInfer<E>) => P1)
 			| null
 			| undefined,
-	): NoInfer<ToRhodium<P1> | Rhodium<R, never>> {
+	): Merged<NoInfer<ToRhodium<P1> | Rhodium<R, never>>> {
 		return new Rhodium(
 			this.promise.catch(onrejected),
 		) as ReturnType<

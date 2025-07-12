@@ -16,7 +16,7 @@ Deno.test("one always rejects", () => {
 			Rhodium.resolve("res1"),
 			Rhodium.resolve("res2"),
 		])
-		return result
+		return result.promise
 	}, EvalError)
 })
 
@@ -43,6 +43,6 @@ Deno.test("all always reject", async () => {
 Deno.test("empty array", () => {
 	assertRejects(() => {
 		const result: Rhodium<never, never> = Rhodium.race([])
-		return result
+		return result.promise
 	})
 })
