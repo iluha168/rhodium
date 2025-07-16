@@ -114,7 +114,7 @@ export class Rhodium<R, E> {
 	 */
 	finally(
 		onfinally?: (() => void) | null | undefined,
-	): NoInfer<Rhodium<R, E>> {
+	): Merged<NoInfer<Rhodium<R, E>>> {
 		return new Rhodium(this.promise.finally(onfinally))
 	}
 

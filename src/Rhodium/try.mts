@@ -1,5 +1,5 @@
 import { Rhodium } from "./index.mts"
-import type { ToRhodium } from "./terminology.d.mts"
+import type { Merged, ToRhodium } from "./terminology.d.mts"
 
 /**
  * Takes a callback of any kind (returns or throws, synchronously or asynchronously) and wraps its result in a Rhodium.
@@ -16,6 +16,8 @@ export function Try<
 >(
 	callbackFn: (...args: NoInfer<U>) => P,
 	...args: U
-): NoInfer<ToRhodium<P>> {
-	return new Rhodium(Promise.try(callbackFn, ...args)) as ToRhodium<P>
+): Merged<NoInfer<ToRhodium<P>>> {
+	return new Rhodium(Promise.try(callbackFn, ...args)) as ReturnType<
+		typeof Try<P, U>
+	>
 }
