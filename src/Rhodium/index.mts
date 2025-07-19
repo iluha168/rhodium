@@ -121,8 +121,6 @@ export class Rhodium<R, E> {
 	//                            ⬆️ Promise
 	//                            ⬇️ Rhodium
 
-	[Symbol.toStringTag] = "Rhodium"
-
 	/**
 	 * Nested {@linkcode Promise} object this {@linkcode Rhodium} was created with.
 	 */
