@@ -41,3 +41,11 @@ Deno.test("is awaited", async () => {
 		.then((begin) => performance.now() - begin)
 	assertGreaterOrEqual(await promise, ms)
 })
+
+Deno.test("can add to the rejection", async () => {
+	const reason = await Rhodium
+		.resolve()
+		.finally(() => Rhodium.reject(2))
+		.catch((e: 2) => e)
+	assertEquals(reason, 2)
+})

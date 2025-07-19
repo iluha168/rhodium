@@ -3,7 +3,7 @@
  * The definition of {@linkcode Rhodium}.
  */
 
-import type { Merged, ToRhodium } from "./terminology.d.mts"
+import type { Errored, Merged, ToRhodium } from "./terminology.d.mts"
 import * as concurrency from "./concurrency.mts"
 import { withResolvers } from "./withResolvers.mts"
 import { Try } from "./try.mts"
@@ -108,13 +108,13 @@ export class Rhodium<R, E> {
 
 	/**
 	 * Attaches a callback that is invoked when the Rhodium is settled (fulfilled or rejected).
-	 * The resolved value cannot be modified from the callback.
+	 * The resolved value cannot be modified from the callback, but the rejected value can be.
 	 * @param onfinally The callback to execute when the Rhodium is settled.
 	 * @returns A Rhodium for the completion of the callback.
 	 */
-	finally(
-		onfinally?: (() => void) | null | undefined,
-	): Merged<NoInfer<Rhodium<R, E>>> {
+	finally<P1 = Rhodium<R, E>>(
+		onfinally?: (() => P1) | null | undefined,
+	): Merged<NoInfer<Rhodium<R, E | Errored<P1>>>> {
 		return new Rhodium(this.promise.finally(onfinally))
 	}
 
