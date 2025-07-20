@@ -1,5 +1,10 @@
-import { assertEquals } from "jsr:@std/assert"
+import {
+	assertAlmostEquals,
+	assertEquals,
+	assertRejects,
+} from "jsr:@std/assert"
 import { Rhodium } from "@/index.mts"
+import { timed } from "../util/timed.ts"
 
 Deno.test("collapses all possible return types", async () => {
 	const getPromise = () => {
@@ -15,4 +20,21 @@ Deno.test("collapses all possible return types", async () => {
 	}
 	const result = await getPromise()
 	assertEquals(result === "couldMakeErr1" || result === "err1", true)
+})
+
+Deno.test("cancellable", async () => {
+	const elapsed = await timed(() =>
+		Rhodium
+			.try(() => Rhodium.sleep(500))
+			.cancel()
+	)
+	assertAlmostEquals(elapsed, 0, 10)
+})
+
+Deno.test("rejects", () => {
+	assertRejects(() =>
+		Rhodium.try(() => {
+			throw 10
+		}).promise
+	)
 })

@@ -8,5 +8,7 @@ import type { Merged, ToRhodium } from "./terminology.d.mts"
 export function resolve<const P = void>(
 	value?: P,
 ): Merged<NoInfer<ToRhodium<P>>> {
-	return new Rhodium(Promise.resolve(value)) as ReturnType<typeof resolve<P>>
+	return (value instanceof Rhodium
+		? value
+		: new Rhodium(Promise.resolve(value))) as ReturnType<typeof resolve<P>>
 }

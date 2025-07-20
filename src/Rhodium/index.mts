@@ -4,6 +4,7 @@
  */
 
 import type { Errored, Merged, ToRhodium } from "./terminology.d.mts"
+import * as CancelErrors from "./CancelErrors.mts"
 import * as concurrency from "./concurrency.mts"
 import { withResolvers } from "./withResolvers.mts"
 import { Try } from "./try.mts"
@@ -11,6 +12,7 @@ import { allSettled } from "./settled.mts"
 import { resolve } from "./resolve.mts"
 import { reject } from "./reject.mts"
 import { sleep } from "./sleep.mts"
+import { cancellableCallback } from "./internal/cancellableCallback.mts"
 
 /**
  * A {@linkcode Promise} wrapper that adds syntax sugar.
@@ -33,8 +35,9 @@ export class Rhodium<R, E> {
 	 */
 	constructor(
 		executor: (
-			resolve: (value: Rhodium<R, E>) => void,
+			resolve: (value: R | Rhodium<R, E>) => void,
 			reject: (reason: E) => void,
+			signal: AbortSignal,
 		) => void,
 	)
 	constructor(
@@ -42,11 +45,12 @@ export class Rhodium<R, E> {
 			| ((
 				resolve: (value: R | PromiseLike<R>) => void,
 				reject: (reason: E) => void,
+				signal: AbortSignal,
 			) => void)
 			| PromiseLike<R>,
 	) {
 		this.promise = typeof arg === "function"
-			? new Promise(arg)
+			? new Promise((res, rej) => arg(res, rej, this.signal))
 			: Promise.resolve(arg)
 	}
 
@@ -63,6 +67,8 @@ export class Rhodium<R, E> {
 
 	/**
 	 * Attaches callbacks for the resolution and/or rejection of the Rhodium.
+	 *
+	 * **Throws {@linkcode CancelErrors.CannotAttachConsumerError} synchronously, when called on a cancelled Rhodium**.
 	 * @param onfulfilled The callback to execute when the Rhodium is resolved.
 	 * @param onrejected The callback to execute when the Rhodium is rejected.
 	 * @returns A Rhodium for the completion of which ever callback is executed.
@@ -72,23 +78,35 @@ export class Rhodium<R, E> {
 		P2 = Rhodium<never, E>,
 	>(
 		onfulfilled?:
-			| ((value: NoInfer<R>) => P1)
+			| ((value: NoInfer<R>, signal: AbortSignal) => P1)
 			| null
 			| undefined,
 		onrejected?:
-			| ((reason: NoInfer<E>) => P2)
+			| ((reason: NoInfer<E>, signal: AbortSignal) => P2)
 			| null
 			| undefined,
 	): Merged<NoInfer<ToRhodium<P1 | P2>>> {
-		return new Rhodium(
-			this.promise.then(onfulfilled, onrejected),
-		) as ReturnType<
-			typeof this.then<P1, P2>
-		>
+		if (this.#childrenAmount === null) {
+			throw new CancelErrors.CannotAttachConsumerError()
+		}
+		const child: Rhodium<any, any> = new Rhodium(
+			this.promise
+				.finally(() => child.#parent = undefined)
+				.then(
+					cancellableCallback(onfulfilled, () => child, this),
+					cancellableCallback(onrejected, () => child, this),
+				).finally(() =>
+					this.#childrenAmount !== null && this.#childrenAmount--
+				),
+		)
+		child.#parent = this
+		this.#childrenAmount++
+		return child as ReturnType<typeof this.then<P1, P2>>
 	}
 
 	/**
 	 * Attaches a callback for only the rejection of the Rhodium.
+	 * Syntax sugar for {@linkcode then}.
 	 * @param onrejected The callback to execute when the Rhodium is rejected.
 	 * @returns A Rhodium for the completion of the callback.
 	 */
@@ -100,11 +118,7 @@ export class Rhodium<R, E> {
 			| null
 			| undefined,
 	): Merged<NoInfer<ToRhodium<P1> | Rhodium<R, never>>> {
-		return new Rhodium(
-			this.promise.catch(onrejected),
-		) as ReturnType<
-			typeof this.catch<P1>
-		>
+		return this.then(null, onrejected)
 	}
 
 	/**
@@ -116,7 +130,13 @@ export class Rhodium<R, E> {
 	finally<P1 = Rhodium<R, E>>(
 		onfinally?: (() => P1) | null | undefined,
 	): Merged<NoInfer<Rhodium<R, E | Errored<P1>>>> {
-		return new Rhodium(this.promise.finally(onfinally))
+		const child = new Rhodium(
+			this.promise
+				.finally(() => child.#parent = undefined)
+				.finally(onfinally),
+		)
+		child.#parent = this
+		return child as ReturnType<typeof this.finally>
 	}
 
 	//                            ⬆️ Promise
@@ -133,5 +153,66 @@ export class Rhodium<R, E> {
 	 */
 	declare private error?: E
 
+	/**
+	 * Keep a reference to the parent {@linkcode Rhodium}.
+	 * This is used for the upwards {@linkcode cancel} propagation.
+	 */
+	#parent?: Rhodium<any, any>
+
+	/**
+	 * This value keeps track of the amount of pending consumers, except {@linkcode finally} - those should always be run.
+	 * Propagate cancellation only if this value was 1 before the cancellation.
+	 * Allow cancellation only if this value is 0.
+	 * If this value is null, consumers will not be called - the Rhodium is {@linkcode cancelled}.
+	 */
+	#childrenAmount: number | null = 0
+
+	readonly #controller: AbortController = new AbortController()
+
+	/**
+	 * This signal triggers for the **currently executing Rhodiums** in a chain, when that chain gets cancelled.
+	 * If this Rhodium has resolved *or* is waiting for preceding Rhodiums, signal will not be triggered,
+	 * because the operation that could be aborted has not started yet.
+	 */
+	get signal(): AbortSignal {
+		return this.#controller.signal
+	}
+
 	static readonly sleep = sleep
+
+	/** Returns whether this Rhodium was cancelled or not. */
+	get cancelled(): boolean {
+		return this.#childrenAmount === null
+	}
+
+	/**
+	 * **Synchronous, even though it does return Rhodium.**
+	 *
+	 * Must be called on the last {@linkcode Rhodium} of its chain.
+	 * Rejects {@linkcode CancelErrors.CannotBeCancelledError} otherwise.
+	 *
+	 * Cancels this Rhodium, and the preceding Rhodiums, up to the root *or* the point of divergence from another pending chain.
+	 * Cancelled Rhodiums do not execute their consumers, except for {@linkcode finally}.
+	 * @returns a Rhodium for the completion of all {@linkcode finally} in the chain.
+	 */
+	cancel(): Rhodium<void, CancelErrors.CannotBeCancelledError> {
+		if (this.#childrenAmount !== null) {
+			if (this.#childrenAmount > 0) {
+				return Rhodium.reject(new CancelErrors.CannotBeCancelledError())
+			}
+			// `ancestor` is used to climb up the chain, with `this` as the starting point
+			// deno-lint-ignore no-this-alias
+			for (let ancestor: Rhodium<any, any> = this;;) {
+				ancestor.#childrenAmount = null
+				if (!ancestor.#parent) {
+					ancestor.#controller.abort()
+					break
+				}
+				ancestor = ancestor.#parent
+				// Ancestor must have non-null children amount - only the last Rhodium in a chain can be cancelled
+				if (--ancestor.#childrenAmount! > 0) break
+			}
+		}
+		return new Rhodium<void, never>(this.promise.then(() => {}, () => {}))
+	}
 }

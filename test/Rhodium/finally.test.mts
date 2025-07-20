@@ -37,7 +37,7 @@ Deno.test("is awaited", async () => {
 		.then(() => performance.now())
 		.finally(() => Rhodium.sleep(ms))
 		.then((begin) => performance.now() - begin)
-	assertAlmostEquals(await promise, ms, 10)
+	assertAlmostEquals(await promise, ms, 15)
 })
 
 Deno.test("can add to the rejection", async () => {

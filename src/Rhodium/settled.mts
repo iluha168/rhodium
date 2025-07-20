@@ -1,4 +1,5 @@
 import { Rhodium } from "./index.mts"
+import { cancelAllWhenCancelled } from "./internal/cancelAllWhenCancelled.mts"
 import type { Errored } from "./terminology.d.mts"
 
 /**
@@ -38,7 +39,7 @@ export function allSettled<const Ps extends Rhodium<any, any>[] | []>(
 	},
 	never
 > {
-	return new Rhodium(Promise.allSettled(values)) as ReturnType<
-		typeof Rhodium.allSettled<Ps>
-	>
+	const total = new Rhodium(Promise.allSettled(values))
+	cancelAllWhenCancelled(values, total)
+	return total as ReturnType<typeof Rhodium.allSettled<Ps>>
 }

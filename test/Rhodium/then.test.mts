@@ -1,5 +1,6 @@
-import { assertEquals } from "jsr:@std/assert"
+import { assertAlmostEquals, assertEquals } from "jsr:@std/assert"
 import { Rhodium } from "@/index.mts"
+import { timed } from "../util/timed.ts"
 
 /// NO CALLBACKS
 
@@ -52,6 +53,28 @@ Deno.test("infers callback argument", async () => {
 	assertEquals(await promise, "value")
 })
 
+Deno.test("resolution signal", async () => {
+	let store = 0
+	const rhodium = Rhodium
+		.resolve()
+		.then((_, signal) => {
+			assertEquals(signal.aborted, false)
+			rhodium.cancel()
+			assertEquals(signal.aborted, true)
+			store = 1
+		})
+	await Rhodium.sleep(10)
+	assertEquals(store, 1)
+})
+
+Deno.test("resolution is cancellable", async () => {
+	const rhodium = Rhodium
+		.resolve()
+		.then(() => Rhodium.sleep(1000))
+
+	assertAlmostEquals(await timed(() => rhodium.cancel()), 0, 10)
+})
+
 /// SECOND CALLBACK
 
 Deno.test("handles with a number", async () => {
@@ -90,6 +113,28 @@ Deno.test("infers handler argument", async () => {
 			return check
 		})
 	assertEquals(await promise, "err")
+})
+
+Deno.test("rejection signal", async () => {
+	let store = 0
+	const rhodium = Rhodium
+		.reject()
+		.then(null, (_, signal) => {
+			assertEquals(signal.aborted, false)
+			rhodium.cancel()
+			assertEquals(signal.aborted, true)
+			store = 1
+		})
+	await Rhodium.sleep(10)
+	assertEquals(store, 1)
+})
+
+Deno.test("rejection is cancellable", async () => {
+	const rhodium = Rhodium
+		.reject()
+		.then(null, () => Rhodium.sleep(1000))
+
+	assertAlmostEquals(await timed(() => rhodium.cancel()), 0, 10)
 })
 
 /// BOTH CALLBACKS
