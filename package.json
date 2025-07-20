@@ -1,6 +1,6 @@
 {
 	"name": "rhodium",
-	"version": "0.1.2",
+	"version": "0.2.0",
 	"description": "A TypeScript `Promise` wrapper that adds syntax sugar.",
 	"homepage": "https://github.com/iluha168/rhodium#readme",
 	"bugs": {
