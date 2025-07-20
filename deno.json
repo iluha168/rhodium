@@ -1,4 +1,17 @@
 {
+	"name": "@iluha168/rhodium",
+	"version": "0.2.0",
+	"license": "MIT",
+	"exports": "./src/mod.mts",
+	"publish": {
+		"exclude": [
+			"node_modules",
+			".vscode",
+			"dist",
+			"test",
+			".github"
+		]
+	},
 	"fmt": {
 		"bracePosition": "sameLine",
 		"indentWidth": 4,
