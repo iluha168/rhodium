@@ -1,6 +1,6 @@
-![Build status](https://img.shields.io/github/actions/workflow/status/iluha168/rhodium/publish.yml)
-![JSR Version](https://img.shields.io/jsr/v/%40iluha168/rhodium)
-![NPM Version](https://img.shields.io/npm/v/rhodium)
+[![Build status](https://img.shields.io/github/actions/workflow/status/iluha168/rhodium/publish.yml)](https://github.com/iluha168/rhodium/actions/workflows/publish.yml)
+[![JSR Version](https://img.shields.io/jsr/v/%40iluha168/rhodium)](https://jsr.io/@iluha168/rhodium)
+[![NPM Version](https://img.shields.io/npm/v/rhodium)](https://www.npmjs.com/package/rhodium)
 <!-- omit in toc -->
 # Rhodium
 A TypeScript `Promise` wrapper that adds syntax sugar and cancellation.
