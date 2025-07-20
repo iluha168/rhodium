@@ -1,3 +1,6 @@
+![Build status](https://img.shields.io/github/actions/workflow/status/iluha168/rhodium/publish.yml)
+![JSR Version](https://img.shields.io/jsr/v/%40iluha168/rhodium)
+![NPM Version](https://img.shields.io/npm/v/rhodium)
 <!-- omit in toc -->
 # Rhodium
 A TypeScript `Promise` wrapper that adds syntax sugar and cancellation.
@@ -14,6 +17,7 @@ It has a type of `Rhodium<PossibleResolutions, PossibleRejections>`.
       - [Early cancellation](#early-cancellation)
   - [Additional methods \& syntax sugar](#additional-methods--syntax-sugar)
     - [`Rhodium.sleep`](#rhodiumsleep)
+- [Inspired by](#inspired-by)
 
 
 ## Interoperability with `Promise`
@@ -137,3 +141,7 @@ You no longer have to write the following boilerplate:
 new Promise(resolve => setTimeout(resolve, milliseconds))
 ```
 The same can now be written as `Rhodium.sleep(milliseconds)`, with the advantage of being [early cancellable](#early-cancellation).
+
+## Inspired by
+- [Effect.ts](https://effect.website/)
+- [Bluebird](http://bluebirdjs.com/docs/api/cancellation.html)
