@@ -1,4 +1,4 @@
-import { assertEquals, assertGreaterOrEqual } from "jsr:@std/assert"
+import { assertAlmostEquals, assertEquals } from "jsr:@std/assert"
 import { Rhodium } from "@/index.mts"
 
 Deno.test("does nothing with no args", async () => {
@@ -35,11 +35,9 @@ Deno.test("is awaited", async () => {
 	const promise: Rhodium<number, never> = Rhodium
 		.resolve(8)
 		.then(() => performance.now())
-		.finally(() =>
-			new Rhodium<void, never>((resolve) => setTimeout(resolve, 200))
-		)
+		.finally(() => Rhodium.sleep(ms))
 		.then((begin) => performance.now() - begin)
-	assertGreaterOrEqual(await promise, ms)
+	assertAlmostEquals(await promise, ms, 10)
 })
 
 Deno.test("can add to the rejection", async () => {

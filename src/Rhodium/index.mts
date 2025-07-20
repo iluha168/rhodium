@@ -10,6 +10,7 @@ import { Try } from "./try.mts"
 import { allSettled } from "./settled.mts"
 import { resolve } from "./resolve.mts"
 import { reject } from "./reject.mts"
+import { sleep } from "./sleep.mts"
 
 /**
  * A {@linkcode Promise} wrapper that adds syntax sugar.
@@ -131,4 +132,6 @@ export class Rhodium<R, E> {
 	 * Does not exist at runtime.
 	 */
 	declare private error?: E
+
+	static readonly sleep = sleep
 }

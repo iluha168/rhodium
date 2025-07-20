@@ -8,6 +8,8 @@ It has a type of `Rhodium<PossibleResolutions, PossibleErrors>`.
   - [Error tracking](#error-tracking)
     - [Caveats](#caveats)
     - [The `Errored<T>` type](#the-erroredt-type)
+  - [Additional methods \& syntax sugar](#additional-methods--syntax-sugar)
+    - [`Rhodium.sleep`](#rhodiumsleep)
 
 
 ## Interoperability with `Promise`
@@ -60,4 +62,15 @@ type E = Errored<typeof promise>
 const promise = Rhodium.reject(new TypeError())
 type E = Errored<typeof promise>
 //   ^? TypeError
+```
+
+### Additional methods & syntax sugar
+#### `Rhodium.sleep`
+You no longer have to write the following boilerplate:
+```ts
+new Promise(resolve => setTimeout(resolve, milliseconds))
+```
+The same can now be written as
+```ts
+Rhodium.sleep(milliseconds)
 ```
