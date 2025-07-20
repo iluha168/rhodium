@@ -39,7 +39,21 @@ export function allSettled<const Ps extends Rhodium<any, any>[] | []>(
 	},
 	never
 > {
-	const total = new Rhodium(Promise.allSettled(values))
-	cancelAllWhenCancelled(values, total)
-	return total as ReturnType<typeof Rhodium.allSettled<Ps>>
+	return new Rhodium<any, any>((resolve, _, signal) => {
+		const settlements: RhodiumSettledResult<any, any>[] = []
+		if (!values.length) return resolve(settlements)
+		let totalSettled = 0
+		cancelAllWhenCancelled(
+			values.map((rhodium, i) =>
+				rhodium.then(
+					(value) => settlements[i] = { status: "fulfilled", value },
+					(reason) => settlements[i] = { status: "rejected", reason },
+				).then(() => {
+					if (++totalSettled >= values.length) resolve(settlements)
+				})
+			),
+			{ signal },
+		)
+		signal.addEventListener("abort", resolve)
+	}) as ReturnType<typeof allSettled<Ps>>
 }
