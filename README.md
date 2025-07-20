@@ -11,6 +11,7 @@ It has a type of `Rhodium<PossibleResolutions, PossibleRejections>`.
     - [Limitations](#limitations)
     - [But what about multiple `then` calls on a single Rhodium?](#but-what-about-multiple-then-calls-on-a-single-rhodium)
     - [Return type of `cancel`](#return-type-of-cancel)
+      - [Early cancellation](#early-cancellation)
   - [Additional methods \& syntax sugar](#additional-methods--syntax-sugar)
     - [`Rhodium.sleep`](#rhodiumsleep)
 
@@ -113,7 +114,7 @@ Only `D` and `G` would be cancellable, because they are at the ends of their cha
 #### Return type of `cancel`
 `cancel` returns a `Rhodium`, but it is actually **synchronous** at its core. Once `cancel` is run, its effects are immediate.
 
-The returned `Rhodium` is fullfilled once all `finally` callbacks of the cancelled chain have been executed. Such new Rhodium is the beginning of a new chain.
+The returned `Rhodium` is **fullfilled** once the **currently running callback** and all of the following **`finally` callbacks** of the cancelled chain have been executed. Such new Rhodium is the beginning of a new chain.
 > [!TIP]
 > This could be useful, for example,
 > - to show a loading throbber for the *exact* time the cancellation is in progress;
@@ -123,13 +124,16 @@ The returned `Rhodium` is fullfilled once all `finally` callbacks of the cancell
 
 In addition, [the described above limitation](#limitations) causes `cancel` to return a rejecting `Rhodium`, to preserve the [ease of handling errors](#error-tracking).
 
+##### Early cancellation
+> [!NOTE]
+> The currently running callback might take a lot of time to execute! If the time it takes for the result of `cancel` to fullfill is important, then it might be of interest to optimize this time.
+> 
+> Every callback (except the non-cancellable `finally`) is provided an **`AbortSignal`** as the second argument, which is triggered when that callback has been running at the time of `cancel`. Using this signal is completely optional - it is only an optimization.
+
 ### Additional methods & syntax sugar
 #### `Rhodium.sleep`
 You no longer have to write the following boilerplate:
 ```ts
 new Promise(resolve => setTimeout(resolve, milliseconds))
 ```
-The same can now be written as
-```ts
-Rhodium.sleep(milliseconds)
-```
+The same can now be written as `Rhodium.sleep(milliseconds)`, with the advantage of being [early cancellable](#early-cancellation).

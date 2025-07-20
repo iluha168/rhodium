@@ -1,5 +1,10 @@
-import { assertEquals, assertStrictEquals } from "jsr:@std/assert"
+import {
+	assertAlmostEquals,
+	assertEquals,
+	assertStrictEquals,
+} from "jsr:@std/assert"
 import { Rhodium } from "@/index.mts"
+import { timed } from "../util/timed.ts"
 
 Deno.test("resolve void", async () => {
 	const result: void = await Rhodium.resolve()
@@ -23,4 +28,16 @@ Deno.test("resolve Rhodium", async () => {
 		Rhodium.resolve([1, 2, 3]),
 	)
 	assertEquals(result, [1, 2, 3])
+})
+
+Deno.test("cancellable", async () => {
+	let elapsed = await timed(() =>
+		Rhodium.resolve(Rhodium.resolve(Rhodium.sleep(300)))
+	)
+	assertAlmostEquals(elapsed, 300, 10)
+
+	elapsed = await timed(() =>
+		Rhodium.resolve(Rhodium.resolve(Rhodium.sleep(300))).cancel()
+	)
+	assertAlmostEquals(elapsed, 0, 10)
 })

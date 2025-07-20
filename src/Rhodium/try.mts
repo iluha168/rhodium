@@ -14,10 +14,18 @@ export function Try<
 	const P,
 	const U extends unknown[] = [],
 >(
-	callbackFn: (...args: NoInfer<U>) => P,
+	callbackFn: (...args: [...U, signal: AbortSignal]) => P,
 	...args: U
 ): Merged<NoInfer<ToRhodium<P>>> {
-	return new Rhodium(Promise.try(callbackFn, ...args)) as ReturnType<
-		typeof Try<P, U>
-	>
+	return new Rhodium((resolve, reject, signal) => {
+		try {
+			const result = callbackFn(...args, signal)
+			if (result instanceof Rhodium) {
+				signal.addEventListener("abort", () => result.cancel())
+			}
+			resolve(result)
+		} catch (e) {
+			reject(e)
+		}
+	}) as ReturnType<typeof Try<P, U>>
 }

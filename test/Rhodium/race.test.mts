@@ -1,5 +1,10 @@
-import { assertEquals, assertRejects } from "jsr:@std/assert"
+import {
+	assertAlmostEquals,
+	assertEquals,
+	assertRejects,
+} from "jsr:@std/assert"
 import { Rhodium } from "@/index.mts"
+import { timed } from "../util/timed.ts"
 
 Deno.test("all never reject", async () => {
 	const result: "res1" | "res2" = await Rhodium.race([
@@ -45,4 +50,15 @@ Deno.test("empty array", () => {
 		const result: Rhodium<never, never> = Rhodium.race([])
 		return result.promise
 	})
+})
+
+Deno.test("cancellable", async () => {
+	let store = 0
+	const rhodium = Rhodium.race([
+		Rhodium.sleep(1000).finally(() => store++),
+		Rhodium.sleep(1000).finally(() => store++),
+	]).finally(() => store++)
+	await Rhodium.sleep(10)
+	assertAlmostEquals(await timed(() => rhodium.cancel()), 0, 10)
+	assertEquals(store, 3)
 })
