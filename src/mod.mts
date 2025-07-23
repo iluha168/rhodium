@@ -1,5 +1,5 @@
 export type * from "./Rhodium/terminology.d.mts"
-export {
+export type {
 	RhodiumFulfilledResult,
 	RhodiumRejectedResult,
 	RhodiumSettledResult,
