@@ -8,6 +8,7 @@ import * as CancelErrors from "./CancelErrors.mts"
 import * as concurrency from "./concurrency.mts"
 import { withResolvers } from "./withResolvers.mts"
 import { Try } from "./try.mts"
+import { tryGen } from "./tryGen.mts"
 import { allSettled } from "./settled.mts"
 import { resolve } from "./resolve.mts"
 import { reject } from "./reject.mts"
@@ -79,6 +80,7 @@ export class Rhodium<R, E> {
 	static readonly allSettled = allSettled
 
 	static readonly try = Try
+	static readonly tryGen = tryGen
 
 	/**
 	 * Attaches callbacks for the resolution and/or rejection of the Rhodium.
@@ -253,5 +255,15 @@ export class Rhodium<R, E> {
 			}
 		}
 		return new Rhodium<void, never>(this.#promise.then(() => {}, () => {}))
+	}
+
+	/**
+	 * When `yield`ed, Rhodium expects the resume value provided in `next` to be *itself*, awaited.
+	 * This enables {@linkcode tryGen}.
+	 */
+	*[Symbol.iterator](): NoInfer<{
+		next(resolved: R | any): IteratorResult<Rhodium<R, E>, R>
+	}> {
+		return yield this
 	}
 }
