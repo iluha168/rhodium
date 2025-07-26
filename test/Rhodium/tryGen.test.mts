@@ -111,11 +111,11 @@ Deno.test("cancellable 2", async () => {
 
 Deno.test("for", async () => {
 	const rhodium = Rhodium
-		.tryGen(function* () {
-			for (let i = 0; i < 10; i++) {
+		.tryGen(function* (n) {
+			for (let i = 0; i < n; i++) {
 				yield* Rhodium.sleep(20)
 			}
-		})
+		}, 10)
 
 	assertAlmostEquals(await timed(() => rhodium), 200, 15)
 })

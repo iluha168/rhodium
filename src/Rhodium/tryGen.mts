@@ -32,11 +32,16 @@ import type { Errored } from "./terminology.d.mts"
  * })
  * ```
  */
-export function tryGen<P extends Rhodium<any, any>, R>(
-	generator: (signal: AbortSignal) => Generator<P, R, never>,
+export function tryGen<
+	const P extends Rhodium<any, any>,
+	const R,
+	const U extends unknown[] = [],
+>(
+	generator: (...args: [...U, signal: AbortSignal]) => Generator<P, R, never>,
+	...args: U
 ): Rhodium<Awaited<R>, Errored<P | R>> {
 	return new Rhodium((res, rej, signal) => {
-		const queue = generator(signal)
+		const queue = generator(...args, signal)
 
 		/** Remember the currently executing Rhodium to be able to cancel it on command. */
 		let pendingRh: Rhodium<any, any>
