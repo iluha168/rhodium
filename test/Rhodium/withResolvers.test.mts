@@ -16,3 +16,11 @@ Deno.test("resolve", async () => {
 	resolve("yes")
 	assertEquals(await rhodium, "yes")
 })
+
+Deno.test("signal", () => {
+	let store = 0
+	const { rhodium, signal } = Rhodium.withResolvers<"yes", "no">()
+	signal.addEventListener("abort", () => store = 1)
+	rhodium.cancel()
+	assertEquals(store, 1)
+})

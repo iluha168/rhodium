@@ -19,11 +19,7 @@ export function Try<
 ): Merged<NoInfer<ToRhodium<P>>> {
 	return new Rhodium((resolve, reject, signal) => {
 		try {
-			const result = callbackFn(...args, signal)
-			if (result instanceof Rhodium) {
-				signal.addEventListener("abort", () => result.cancel())
-			}
-			resolve(result)
+			resolve(callbackFn(...args, signal))
 		} catch (e) {
 			reject(e)
 		}

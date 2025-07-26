@@ -6,7 +6,7 @@ export function cancellableCallback<D extends any[], P>(
 		| null
 		| undefined,
 	/** Can only be called inside the returned callback, not synchronously */
-	getChild: () => Rhodium<any, any>,
+	child: Rhodium<any, any>,
 	parent: Rhodium<any, any>,
 ):
 	| NoInfer<(...value: D) => P | void>
@@ -14,7 +14,7 @@ export function cancellableCallback<D extends any[], P>(
 	| undefined {
 	return callback && ((...data) => {
 		if (parent.cancelled) return
-		const signal = getChild().signal
+		const { signal } = child
 		const result = callback(...data, signal)
 		if (result instanceof Rhodium) {
 			// Callbacks recursively unwrap Promises and Rhodiums
