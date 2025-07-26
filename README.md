@@ -1,6 +1,8 @@
+[![License](https://img.shields.io/github/license/iluha168/rhodium)](https://github.com/iluha168/rhodium)
 [![Build status](https://img.shields.io/github/actions/workflow/status/iluha168/rhodium/publish.yml)](https://github.com/iluha168/rhodium/actions/workflows/publish.yml)
 [![JSR Version](https://img.shields.io/jsr/v/%40iluha168/rhodium)](https://jsr.io/@iluha168/rhodium)
 [![NPM Version](https://img.shields.io/npm/v/rhodium)](https://www.npmjs.com/package/rhodium)
+[![NPM Downloads](https://img.shields.io/npm/d18m/rhodium?style=flat&label=npm%20downloads)](https://www.npmjs.com/package/rhodium?activeTab=versions)
 <!-- omit in toc -->
 # Rhodium
 A TypeScript `Promise` wrapper that adds syntax sugar and cancellation.
@@ -17,6 +19,7 @@ It has a type of `Rhodium<PossibleResolutions, PossibleRejections>`.
       - [Early cancellation](#early-cancellation)
   - [Additional methods \& syntax sugar](#additional-methods--syntax-sugar)
     - [`Rhodium.sleep`](#rhodiumsleep)
+    - [`Rhodium.oneSettled`](#rhodiumonesettled)
     - [`Rhodium.tryGen` - the `async` of Rhodium](#rhodiumtrygen---the-async-of-rhodium)
 - [Inspired by](#inspired-by)
 
@@ -143,8 +146,34 @@ new Promise(resolve => setTimeout(resolve, milliseconds))
 ```
 The same can now be written as `Rhodium.sleep(milliseconds)`, with the advantage of being [early cancellable](#early-cancellation).
 
+#### `Rhodium.oneSettled`
+Same as `Promise.allSettled()`; except the rejection reason is properly typed, and it is applied to one `Rhodium` instead of an array.
+Has a non-static shorthand called `Rhodium.settled`.
+
+A settled `Rhodium` can be safely `await`ed! You will not lose the error type, because it makes its way into the resolution type.
+However, `async` functions still have rejection type `unknown`, and cannot be cancelled - for that reason use [`Rhodium.tryGen`](#rhodiumtrygen---the-async-of-rhodium).
+
+```ts
+const myRhodium: Rhodium<"value", Error> = /* ... */
+const { value, reason, status } = await myRhodium.settled()
+      // ^? value: "value" | undefined
+      //    reason: Error | undefined
+      //    status: "fulfilled" | "rejected"
+if (value) {
+	console.log(value, reason, status)
+            // ^? value: "value"
+            //    reason: undefined
+            //    status: "fulfilled"
+} else {
+	console.log(value, reason, status)
+            // ^? value: undefined
+            //    reason: Error
+            //    status: "rejected"
+}
+```
+
 #### `Rhodium.tryGen` - the `async` of Rhodium
-Executes a generator function, that is now able to type-safely `await` Rhodiums. When a yielded `Rhodium` resolves, the generator is resumed with that resolution value.
+Executes a generator function, that is now able to type-safely `await` Rhodiums, by `yield*`-ing them instead. When a yielded `Rhodium` resolves, the generator is resumed with that resolution value.
 
 The return value of the generator becomes the resolution value of `tryGen`.
 
@@ -159,10 +188,11 @@ The return value of the generator becomes the resolution value of `tryGen`.
 ```ts
 Rhodium.tryGen(function* () {
   for (let i = 1; i <= 10; i++) {
-    try {
-      console.log(`Page ${i}: ${yield* getItems(i)}`)
-    } finally {
-      console.error("A rejection or cancellation happened")
+    const { value: items, reason } = yield* fetchItems(i).settled()
+    if (items) {
+      console.log(`Page ${i}: ${items}`)
+    } else {
+      console.error(reason)
     }
     yield* Rhodium.sleep(1000)
   }

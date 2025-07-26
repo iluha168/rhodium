@@ -9,7 +9,7 @@ import * as concurrency from "./concurrency.mts"
 import { withResolvers } from "./withResolvers.mts"
 import { Try } from "./try.mts"
 import { tryGen } from "./tryGen.mts"
-import { allSettled } from "./settled.mts"
+import { allSettled, oneSettled } from "./settled.mts"
 import { resolve } from "./resolve.mts"
 import { reject } from "./reject.mts"
 import { sleep } from "./sleep.mts"
@@ -77,10 +77,14 @@ export class Rhodium<R, E> {
 	static readonly all = concurrency.all
 	static readonly any = concurrency.any
 	static readonly race = concurrency.race
+
 	static readonly allSettled = allSettled
+	static readonly oneSettled = oneSettled
 
 	static readonly try = Try
 	static readonly tryGen = tryGen
+
+	static readonly sleep = sleep
 
 	/**
 	 * Attaches callbacks for the resolution and/or rejection of the Rhodium.
@@ -149,8 +153,15 @@ export class Rhodium<R, E> {
 		return child as ReturnType<typeof this.finally>
 	}
 
-	//                            ⬆️ Promise
-	//                            ⬇️ Rhodium
+	/**
+	 * Merges both the resolution and rejection into resolution.
+	 * Syntax sugar for calling {@linkcode oneSettled} on this Rhodium.
+	 *
+	 * @returns a Rhodium that is resolved when this Rhodium resolves or rejects.
+	 */
+	settled(): ReturnType<NoInfer<typeof oneSettled<R, E>>> {
+		return oneSettled(this)
+	}
 
 	/**
 	 * Nested {@linkcode Promise} object this {@linkcode Rhodium} was created with.
@@ -165,8 +176,6 @@ export class Rhodium<R, E> {
 	 * Does not exist at runtime.
 	 */
 	declare private error?: E
-
-	static readonly sleep = sleep
 
 	// -------------------------- Cancellation --------------------------
 
