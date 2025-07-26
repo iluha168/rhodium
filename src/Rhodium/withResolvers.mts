@@ -2,8 +2,9 @@ import { Rhodium } from "./index.mts"
 
 export type RhodiumWithResolvers<R, E> = {
 	rhodium: Rhodium<R, E>
-	resolve: (value: R | PromiseLike<R> | Rhodium<R, E>) => void
+	resolve: (value: R | Rhodium<R, E>) => void
 	reject: (reason: E) => void
+	signal: AbortSignal
 }
 
 /**
@@ -13,10 +14,11 @@ export type RhodiumWithResolvers<R, E> = {
 export function withResolvers<R1, E1>(): NoInfer<
 	RhodiumWithResolvers<R1, E1>
 > {
-	const resolvers = Promise.withResolvers<R1>()
-	return {
-		reject: resolvers.reject,
-		resolve: resolvers.resolve,
-		rhodium: new Rhodium<R1, E1>(resolvers.promise),
-	} as RhodiumWithResolvers<R1, E1>
+	const resolvers: Partial<RhodiumWithResolvers<R1, E1>> = {}
+	resolvers.rhodium = new Rhodium<R1, E1>((res, rej, signal) => {
+		resolvers.resolve = res
+		resolvers.reject = rej
+		resolvers.signal = signal
+	})
+	return resolvers as RhodiumWithResolvers<R1, E1>
 }

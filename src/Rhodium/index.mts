@@ -8,6 +8,7 @@ import * as CancelErrors from "./CancelErrors.mts"
 import * as concurrency from "./concurrency.mts"
 import { withResolvers } from "./withResolvers.mts"
 import { Try } from "./try.mts"
+import { tryGen } from "./tryGen.mts"
 import { allSettled } from "./settled.mts"
 import { resolve } from "./resolve.mts"
 import { reject } from "./reject.mts"
@@ -49,8 +50,23 @@ export class Rhodium<R, E> {
 			) => void)
 			| PromiseLike<R>,
 	) {
-		this.promise = typeof arg === "function"
-			? new Promise((res, rej) => arg(res, rej, this.signal))
+		this.#promise = typeof arg === "function"
+			? new Promise((res, rej) =>
+				arg(
+					(resolution) =>
+						res(
+							resolution instanceof Rhodium
+								? Rhodium.attachChildToParent(
+									this,
+									resolution,
+									(p) => p,
+								)
+								: resolution,
+						),
+					rej,
+					this.signal,
+				)
+			)
 			: Promise.resolve(arg)
 	}
 
@@ -64,6 +80,7 @@ export class Rhodium<R, E> {
 	static readonly allSettled = allSettled
 
 	static readonly try = Try
+	static readonly tryGen = tryGen
 
 	/**
 	 * Attaches callbacks for the resolution and/or rejection of the Rhodium.
@@ -86,22 +103,15 @@ export class Rhodium<R, E> {
 			| null
 			| undefined,
 	): Merged<NoInfer<ToRhodium<P1 | P2>>> {
-		if (this.#childrenAmount === null) {
-			throw new CancelErrors.CannotAttachConsumerError()
-		}
-		const child: Rhodium<any, any> = new Rhodium(
-			this.promise
-				.finally(() => child.#parent = undefined)
-				.then(
-					cancellableCallback(onfulfilled, () => child, this),
-					cancellableCallback(onrejected, () => child, this),
-				).finally(() =>
-					this.#childrenAmount !== null && this.#childrenAmount--
-				),
-		)
-		child.#parent = this
-		this.#childrenAmount++
-		return child as ReturnType<typeof this.then<P1, P2>>
+		const child = new Rhodium(Promise.resolve()) as ReturnType<
+			typeof this.then<P1, P2>
+		>
+		child.#promise = Rhodium.attachChildToParent(child, this, (p) =>
+			p.then(
+				cancellableCallback(onfulfilled, child, this),
+				cancellableCallback(onrejected, child, this),
+			))
+		return child
 	}
 
 	/**
@@ -131,7 +141,7 @@ export class Rhodium<R, E> {
 		onfinally?: (() => P1) | null | undefined,
 	): Merged<NoInfer<Rhodium<R, E | Errored<P1>>>> {
 		const child = new Rhodium(
-			this.promise
+			this.#promise
 				.finally(() => child.#parent = undefined)
 				.finally(onfinally),
 		)
@@ -145,13 +155,20 @@ export class Rhodium<R, E> {
 	/**
 	 * Nested {@linkcode Promise} object this {@linkcode Rhodium} was created with.
 	 */
-	readonly promise: Promise<R>
+	get promise(): Promise<R> {
+		return this.#promise
+	}
+	#promise: Promise<R>
 
 	/**
 	 * Is required to disable subtype reduction.
 	 * Does not exist at runtime.
 	 */
 	declare private error?: E
+
+	static readonly sleep = sleep
+
+	// -------------------------- Cancellation --------------------------
 
 	/**
 	 * Keep a reference to the parent {@linkcode Rhodium}.
@@ -167,6 +184,32 @@ export class Rhodium<R, E> {
 	 */
 	#childrenAmount: number | null = 0
 
+	/**
+	 * Sets the {@linkcode child}'s parent field, and automatically unsets it
+	 * when the {@linkcode parent} has been fullfilled.
+	 *
+	 * Keeps track of children amount on the parent as well.
+	 */
+	private static attachChildToParent<PR, MR>(
+		child: Rhodium<any, any>,
+		parent: Rhodium<PR, any>,
+		attach: (newPromise: Promise<NoInfer<PR>>) => Promise<MR>,
+	): Promise<NoInfer<MR>> {
+		if (parent.#childrenAmount === null) {
+			throw new CancelErrors.CannotAttachConsumerError()
+		}
+
+		const autoForgetsParent = attach(parent.#promise
+			.finally(() => child.#parent = undefined))
+			.finally(() =>
+				parent.#childrenAmount !== null && parent.#childrenAmount--
+			)
+
+		child.#parent = parent
+		parent.#childrenAmount++
+		return autoForgetsParent
+	}
+
 	readonly #controller: AbortController = new AbortController()
 
 	/**
@@ -177,8 +220,6 @@ export class Rhodium<R, E> {
 	get signal(): AbortSignal {
 		return this.#controller.signal
 	}
-
-	static readonly sleep = sleep
 
 	/** Returns whether this Rhodium was cancelled or not. */
 	get cancelled(): boolean {
@@ -213,6 +254,16 @@ export class Rhodium<R, E> {
 				if (--ancestor.#childrenAmount! > 0) break
 			}
 		}
-		return new Rhodium<void, never>(this.promise.then(() => {}, () => {}))
+		return new Rhodium<void, never>(this.#promise.then(() => {}, () => {}))
+	}
+
+	/**
+	 * When `yield`ed, Rhodium expects the resume value provided in `next` to be *itself*, awaited.
+	 * This enables {@linkcode tryGen}.
+	 */
+	*[Symbol.iterator](): NoInfer<{
+		next(resolved: R | any): IteratorResult<Rhodium<R, E>, R>
+	}> {
+		return yield this
 	}
 }

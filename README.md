@@ -17,6 +17,7 @@ It has a type of `Rhodium<PossibleResolutions, PossibleRejections>`.
       - [Early cancellation](#early-cancellation)
   - [Additional methods \& syntax sugar](#additional-methods--syntax-sugar)
     - [`Rhodium.sleep`](#rhodiumsleep)
+    - [`Rhodium.tryGen` - the `async` of Rhodium](#rhodiumtrygen---the-async-of-rhodium)
 - [Inspired by](#inspired-by)
 
 
@@ -142,6 +143,33 @@ new Promise(resolve => setTimeout(resolve, milliseconds))
 ```
 The same can now be written as `Rhodium.sleep(milliseconds)`, with the advantage of being [early cancellable](#early-cancellation).
 
+#### `Rhodium.tryGen` - the `async` of Rhodium
+Executes a generator function, that is now able to type-safely `await` Rhodiums. When a yielded `Rhodium` resolves, the generator is resumed with that resolution value.
+
+The return value of the generator becomes the resolution value of `tryGen`.
+
+> [!CAUTION]
+> The generator function is free to
+> - never exit;
+> - use any JavaScript constructs such as `while`, `for`, `switch`, `if`, etc.;
+> - `yield*` other such generators, including itself;
+>
+> **but it cannot utilize `try {} catch {}`**. The `catch` block will never be executed, as a part of [the neverthrow philosophy](#error-tracking). Any unhandled rejection will move the generator's execution to the `finally` block, if there is one, and after it completes, `tryGen` will reject.
+
+```ts
+Rhodium.tryGen(function* () {
+  for (let i = 1; i <= 10; i++) {
+    try {
+      console.log(`Page ${i}: ${yield* getItems(i)}`)
+    } finally {
+      console.error("A rejection or cancellation happened")
+    }
+    yield* Rhodium.sleep(1000)
+  }
+})
+```
+
 ## Inspired by
 - [Effect.ts](https://effect.website/)
 - [Bluebird](http://bluebirdjs.com/docs/api/cancellation.html)
+- [Neverthrow](https://www.npmjs.com/package/neverthrow)
