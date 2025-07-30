@@ -20,7 +20,10 @@ import { cancellableCallback } from "./internal/cancellableCallback.mts"
  * `R` is the type of an {@link Awaited awaited} {@linkcode Rhodium}.
  * `E` is the {@link Errored error} which may be thrown by a {@linkcode Rhodium}.
  */
-export class Rhodium<R, E> {
+export class Rhodium<
+	out R,
+	out E,
+> {
 	/**
 	 * Creates a new {@linkcode Rhodium}.
 	 * @param promise object to wrap.
