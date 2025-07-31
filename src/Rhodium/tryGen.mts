@@ -1,5 +1,5 @@
 import { Rhodium } from "./index.mts"
-import type { Errored } from "./terminology.d.mts"
+import type { Errored, Merged } from "./terminology.d.mts"
 
 /**
  * Resolves each Rhodium yielded by {@linkcode generator} one by one.
@@ -39,7 +39,7 @@ export function tryGen<
 >(
 	generator: (...args: [...U, signal: AbortSignal]) => Generator<P, R, never>,
 	...args: U
-): Rhodium<Awaited<R>, Errored<P | R>> {
+): Merged<NoInfer<Rhodium<Awaited<R>, Errored<P> | Errored<R>>>> {
 	return new Rhodium((res, rej, signal) => {
 		const queue = generator(...args, signal)
 
