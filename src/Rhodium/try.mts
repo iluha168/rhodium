@@ -16,7 +16,7 @@ export function Try<
 >(
 	callbackFn: (...args: [...U, signal: AbortSignal]) => P,
 	...args: U
-): Merged<NoInfer<ToRhodium<P>>> {
+): Merged<ToRhodium<P>> {
 	return new Rhodium((resolve, reject, signal) => {
 		try {
 			resolve(callbackFn(...args, signal))

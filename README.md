@@ -21,6 +21,7 @@ It has a type of `Rhodium<PossibleResolutions, PossibleRejections>`.
     - [`Rhodium.sleep`](#rhodiumsleep)
     - [`Rhodium.oneSettled`](#rhodiumonesettled)
     - [`Rhodium.tryGen` - the `async` of Rhodium](#rhodiumtrygen---the-async-of-rhodium)
+    - [`Rhodium.catchFilter`](#rhodiumcatchfilter)
 - [Inspired by](#inspired-by)
 
 
@@ -51,6 +52,22 @@ Rhodium
 
 > [!CAUTION]
 > This library assumes `throw` keyword is never used. **It is impossible to track types of `throw` errors.** `Rhodium` has a neverthrow philosophy; you should always use `Rhodium.reject()` instead. I suggest enforcing this rule if you decide to adopt `Rhodium`.
+
+
+> [!CAUTION]
+> All errors must be structurally distinct:
+> - ❌ `new SyntaxError` + `new TypeError`
+> - ✔️ `class ErrA { code = 1 as const }` + `class ErrB { code = 2 as const }`
+> 
+> This is a TypeScript limitation. Any object containing another triggers a subtype reduction. Usually this object would be constructed by `Rhodium.reject()`, but this does work for everything, e.g., arrays:
+> ```ts
+> class ErrorA extends Error {}
+> class ErrorB extends Error {}
+>    // ▼? const result: ErrorA[]
+> const result = Math.random() > 0.5
+>   ? [new ErrorA()]
+>   : [new ErrorB()]
+> ```
 
 > [!IMPORTANT]
 > Other **`PromiseLike`** objects returned inside the chain automatically change the **error type to `unknown`**. We can never be sure what type they reject, if any. This includes **`async` callbacks**, as they always return `Promise`s.
@@ -197,6 +214,16 @@ Rhodium.tryGen(function* () {
     yield* Rhodium.sleep(1000)
   }
 })
+```
+
+#### `Rhodium.catchFilter`
+With the power of type guards, handling specific errors becomes easy. The first argument is a filter for specific errors, and the second is the callback, which gets called with only the allowed errors. Filtered out errors get rejected again, unaffected, essentially "skipping" `catchFilter`.
+```ts
+const myRhodium: Rhodium<Data, ErrorA | ErrorB> = /* ... */
+myRhodium.catchFilter(
+  err => err instanceof ErrorA,
+  (err /* : ErrorA */) => "handled ErrorA" as const
+) // <? Rhodium<Data | "handled ErrorA", ErrorB>
 ```
 
 ## Inspired by

@@ -4,6 +4,7 @@
  */
 
 import type { Errored, Merged, ToRhodium } from "./terminology.d.mts"
+import type { isExcludeUnsafe } from "./internal/subtypeDetection.d.mts"
 import * as CancelErrors from "./CancelErrors.mts"
 import * as concurrency from "./concurrency.mts"
 import { withResolvers } from "./withResolvers.mts"
@@ -109,7 +110,7 @@ export class Rhodium<
 			| ((reason: NoInfer<E>, signal: AbortSignal) => P2)
 			| null
 			| undefined,
-	): Merged<NoInfer<ToRhodium<P1 | P2>>> {
+	): Merged<ToRhodium<P1> | ToRhodium<P2>> {
 		const child = new Rhodium(Promise.resolve()) as ReturnType<
 			typeof this.then<P1, P2>
 		>
@@ -134,8 +135,30 @@ export class Rhodium<
 			| ((reason: NoInfer<E>) => P1)
 			| null
 			| undefined,
-	): Merged<NoInfer<ToRhodium<P1> | Rhodium<R, never>>> {
-		return this.then(null, onrejected)
+	): Merged<ToRhodium<P1> | Rhodium<R, never>> {
+		return this.then(null, onrejected) as ReturnType<typeof this.catch<P1>>
+	}
+
+	/**
+	 * Attaches a callback for some specific rejections of the Rhodium.
+	 * Syntax sugar for {@linkcode catch}.
+	 * @param filter The callback that decides which reasons will be handled.
+	 * @param onrejected The callback to execute when the Rhodium is rejected with an allowed reason.
+	 */
+	catchFilter<
+		const EF extends E,
+		// Get new Rhodium's `E` type from `Exclude` only when it is safe to do so
+		const ENF = isExcludeUnsafe<E, EF, unknown, Exclude<E, EF>>,
+		const P1 = Rhodium<R, E>,
+	>(
+		filter: (reason: E) => reason is EF,
+		onrejected: (reason: EF) => P1,
+	): Merged<
+		ToRhodium<P1> | Rhodium<R, never> | Rhodium<never, ENF>
+	> {
+		return this.catch((e) =>
+			filter(e) ? onrejected(e) : reject(e as unknown as ENF)
+		)
 	}
 
 	/**
@@ -146,7 +169,7 @@ export class Rhodium<
 	 */
 	finally<P1 = Rhodium<R, E>>(
 		onfinally?: (() => P1) | null | undefined,
-	): Merged<NoInfer<Rhodium<R, E | Errored<P1>>>> {
+	): Merged<Rhodium<R, E | Errored<P1>>> {
 		const child = new Rhodium(
 			this.#promise
 				.finally(() => child.#parent = undefined)
@@ -162,7 +185,7 @@ export class Rhodium<
 	 *
 	 * @returns a Rhodium that is resolved when this Rhodium resolves or rejects.
 	 */
-	settled(): ReturnType<NoInfer<typeof oneSettled<R, E>>> {
+	settled(): ReturnType<typeof oneSettled<R, E>> {
 		return oneSettled(this)
 	}
 
@@ -273,9 +296,9 @@ export class Rhodium<
 	 * When `yield`ed, Rhodium expects the resume value provided in `next` to be *itself*, awaited.
 	 * This enables {@linkcode tryGen}.
 	 */
-	*[Symbol.iterator](): NoInfer<{
+	*[Symbol.iterator](): {
 		next(resolved: R | any): IteratorResult<Rhodium<R, E>, R>
-	}> {
+	} {
 		return yield this
 	}
 }

@@ -32,9 +32,13 @@ Deno.test("cancellable", async () => {
 })
 
 Deno.test("rejects", () => {
+	assertRejects(() => Rhodium.try(() => Rhodium.reject(10)).promise)
+})
+
+Deno.test("throw also rejects", () => {
 	assertRejects(() =>
 		Rhodium.try(() => {
-			throw 10
-		}).promise
-	)
+			// Sin
+			throw new SyntaxError()
+		}).promise, SyntaxError)
 })

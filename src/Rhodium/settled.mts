@@ -30,7 +30,7 @@ export type RhodiumSettledResult<R, E> =
  */
 export function oneSettled<const R, const E>(
 	rhodium: Rhodium<R, E>,
-): NoInfer<Rhodium<RhodiumSettledResult<R, E>, never>> {
+): Rhodium<RhodiumSettledResult<R, E>, never> {
 	return rhodium.then(
 		(value) => ({ status: "fulfilled" as const, value }),
 		(reason) => ({ status: "rejected" as const, reason }),

@@ -39,7 +39,7 @@ export function tryGen<
 >(
 	generator: (...args: [...U, signal: AbortSignal]) => Generator<P, R, never>,
 	...args: U
-): Merged<NoInfer<Rhodium<Awaited<R>, Errored<P> | Errored<R>>>> {
+): Merged<Rhodium<Awaited<R>, Errored<P> | Errored<R>>> {
 	return new Rhodium((res, rej, signal) => {
 		const queue = generator(...args, signal)
 

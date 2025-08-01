@@ -11,9 +11,7 @@ export type RhodiumWithResolvers<R, E> = {
  * Creates a new pending Rhodium.
  * @returns an object, containing the Rhodium along with its resolve and reject functions.
  */
-export function withResolvers<R1, E1>(): NoInfer<
-	RhodiumWithResolvers<R1, E1>
-> {
+export function withResolvers<R1, E1>(): RhodiumWithResolvers<R1, E1> {
 	const resolvers: Partial<RhodiumWithResolvers<R1, E1>> = {}
 	resolvers.rhodium = new Rhodium<R1, E1>((res, rej, signal) => {
 		resolvers.resolve = res
