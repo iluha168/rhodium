@@ -16,13 +16,11 @@ type NeverIfOneElementIsNever<Arr> = "yes" extends {
  */
 export function all<const Ps extends Rhodium<any, any>[] | []>(
 	values: Ps,
-): NoInfer<
-	Rhodium<
-		NeverIfOneElementIsNever<
-			{ -readonly [P in keyof Ps]: Awaited<Ps[P]> }
-		>,
-		Errored<Ps[keyof Ps]>
-	>
+): Rhodium<
+	NeverIfOneElementIsNever<
+		{ -readonly [P in keyof Ps]: Awaited<Ps[P]> }
+	>,
+	Errored<Ps[keyof Ps]>
 > {
 	return new Rhodium<any, any>((resolve, reject, signal) => {
 		const resolutions: any[] = []

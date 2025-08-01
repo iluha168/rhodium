@@ -25,6 +25,19 @@ export type RhodiumSettledResult<R, E> =
 	| RhodiumRejectedResult<E>
 
 /**
+ * Creates a Rhodium that is resolved when the provided value resolves or rejects.
+ * Syntax sugar for {@linkcode Rhodium.then}.
+ */
+export function oneSettled<const R, const E>(
+	rhodium: Rhodium<R, E>,
+): Rhodium<RhodiumSettledResult<R, E>, never> {
+	return rhodium.then(
+		(value) => ({ status: "fulfilled" as const, value }),
+		(reason) => ({ status: "rejected" as const, reason }),
+	)
+}
+
+/**
  * Creates a Rhodium that is
  * resolved with an array of results when all of the provided values resolve or reject.
  */
@@ -45,10 +58,8 @@ export function allSettled<const Ps extends Rhodium<any, any>[] | []>(
 		let totalSettled = 0
 		cancelAllWhenCancelled(
 			values.map((rhodium, i) =>
-				rhodium.then(
-					(value) => settlements[i] = { status: "fulfilled", value },
-					(reason) => settlements[i] = { status: "rejected", reason },
-				).then(() => {
+				oneSettled(rhodium).then((settlement) => {
+					settlements[i] = settlement
 					if (++totalSettled >= values.length) resolve(settlements)
 				})
 			),

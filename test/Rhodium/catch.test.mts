@@ -29,3 +29,28 @@ Deno.test("infers callback argument type", async () => {
 		})
 	assertEquals(await promise, "err1")
 })
+
+class ErrorA extends Error {
+	code = 1 as const
+}
+class ErrorB extends Error {
+	code = 2 as const
+}
+
+Deno.test("catchFilter caught", async () => {
+	assertEquals(
+		await Rhodium
+			.reject(new ErrorA())
+			.then(() => Rhodium.reject(new ErrorB()))
+			.catchFilter((e) => e instanceof ErrorA, () => null),
+		null,
+	)
+})
+
+Deno.test("catchFilter not satisfied", () => {
+	assertRejects(() =>
+		Rhodium
+			.reject(new ErrorB())
+			.catchFilter((e) => e instanceof ErrorA, () => null)
+			.promise, ErrorB)
+})

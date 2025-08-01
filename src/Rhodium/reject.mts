@@ -7,6 +7,6 @@ import type { Merged } from "./terminology.d.mts"
  */
 export function reject<const E1 = void>(
 	reason?: E1,
-): Merged<NoInfer<Rhodium<never, E1>>> {
+): Merged<Rhodium<never, E1>> {
 	return new Rhodium(Promise.reject(reason))
 }

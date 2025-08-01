@@ -78,3 +78,23 @@ Deno.test("cancellable", async () => {
 	assertAlmostEquals(await timed(() => rhodium.cancel()), 0, 10)
 	assertEquals(store, 3)
 })
+
+Deno.test("oneSettled resolved", async () => {
+	const resolved = await Rhodium.oneSettled(Rhodium.resolve(1))
+	assertEquals(resolved, { status: "fulfilled", value: 1 })
+})
+
+Deno.test("oneSettled rejected", async () => {
+	const rejected = await Rhodium.oneSettled(Rhodium.reject(2))
+	assertEquals(rejected, { status: "rejected", reason: 2 })
+})
+
+Deno.test("settled resolved", async () => {
+	const resolved = await Rhodium.resolve(3).settled()
+	assertEquals(resolved, { status: "fulfilled", value: 3 })
+})
+
+Deno.test("settled rejected", async () => {
+	const rejected = await Rhodium.reject(4).settled()
+	assertEquals(rejected, { status: "rejected", reason: 4 })
+})

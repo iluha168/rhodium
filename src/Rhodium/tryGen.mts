@@ -1,5 +1,5 @@
 import { Rhodium } from "./index.mts"
-import type { Errored } from "./terminology.d.mts"
+import type { Errored, Merged } from "./terminology.d.mts"
 
 /**
  * Resolves each Rhodium yielded by {@linkcode generator} one by one.
@@ -32,11 +32,16 @@ import type { Errored } from "./terminology.d.mts"
  * })
  * ```
  */
-export function tryGen<P extends Rhodium<any, any>, R>(
-	generator: (signal: AbortSignal) => Generator<P, R, never>,
-): Rhodium<Awaited<R>, Errored<P | R>> {
+export function tryGen<
+	const P extends Rhodium<any, any>,
+	const R,
+	const U extends unknown[] = [],
+>(
+	generator: (...args: [...U, signal: AbortSignal]) => Generator<P, R, never>,
+	...args: U
+): Merged<Rhodium<Awaited<R>, Errored<P> | Errored<R>>> {
 	return new Rhodium((res, rej, signal) => {
-		const queue = generator(signal)
+		const queue = generator(...args, signal)
 
 		/** Remember the currently executing Rhodium to be able to cancel it on command. */
 		let pendingRh: Rhodium<any, any>
