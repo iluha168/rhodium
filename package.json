@@ -12,6 +12,14 @@
 	},
 	"license": "MIT",
 	"author": "iluha168",
+	"keywords": [
+		"promise",
+		"async",
+		"error-handling",
+		"cancel",
+		"cancellable",
+		"well-typed"
+	],
 	"type": "module",
 	"main": "dist/mod.mjs",
 	"types": "dist/mod.d.mts",
