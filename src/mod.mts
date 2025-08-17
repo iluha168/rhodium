@@ -4,5 +4,9 @@ export type {
 	RhodiumRejectedResult,
 	RhodiumSettledResult,
 } from "./Rhodium/settled.mts"
+export type {
+	RhodiumCancelledResult,
+	RhodiumFinalizedResult,
+} from "./Rhodium/finalized.mts"
 
 export * from "./Rhodium/index.mts"

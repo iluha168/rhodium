@@ -13,3 +13,10 @@ Deno.test("sleep cancelled", async () => {
 	const elapsed = await timed(() => Rhodium.sleep(sleepMS).cancel())
 	assertAlmostEquals(elapsed, 0, 10)
 })
+
+Deno.test("sleep cancelled after a delay", async () => {
+	const rhSleep = Rhodium.sleep(sleepMS)
+	await Rhodium.sleep(50)
+	const elapsed = await timed(() => rhSleep.cancel())
+	assertAlmostEquals(elapsed, 0, 10)
+})

@@ -11,6 +11,11 @@ import { withResolvers } from "./withResolvers.mts"
 import { Try } from "./try.mts"
 import { tryGen } from "./tryGen.mts"
 import { allSettled, oneSettled } from "./settled.mts"
+import {
+	allFinalized,
+	oneFinalized,
+	type RhodiumFinalizedResult,
+} from "./finalized.mts"
 import { resolve } from "./resolve.mts"
 import { reject } from "./reject.mts"
 import { sleep } from "./sleep.mts"
@@ -84,6 +89,9 @@ export class Rhodium<
 
 	static readonly allSettled = allSettled
 	static readonly oneSettled = oneSettled
+
+	static readonly oneFinalized = oneFinalized
+	static readonly allFinalized = allFinalized
 
 	static readonly try = Try
 	static readonly tryGen = tryGen
@@ -262,6 +270,15 @@ export class Rhodium<
 	}
 
 	/**
+	 * Creates a Rhodium that is resolved when the provided value finalizes.
+	 * Finalization is a superset of both {@link cancel cancellation} and {@link settled settlement}.
+	 * In case of cancellation, returned Rhodium will only resolve when all {@linkcode finally} callbacks have been executed.
+	 */
+	finalized(): ReturnType<typeof oneFinalized<R, E>> {
+		return oneFinalized(this)
+	}
+
+	/**
 	 * **Synchronous, even though it does return Rhodium.**
 	 *
 	 * Must be called on the last {@linkcode Rhodium} of its chain.
@@ -269,9 +286,12 @@ export class Rhodium<
 	 *
 	 * Cancels this Rhodium, and the preceding Rhodiums, up to the root *or* the point of divergence from another pending chain.
 	 * Cancelled Rhodiums do not execute their consumers, except for {@linkcode finally}.
-	 * @returns a Rhodium for the completion of all {@linkcode finally} in the chain.
+	 * @returns Calls {@linkcode final} and returns the result.
 	 */
-	cancel(): Rhodium<void, CancelErrors.CannotBeCancelledError> {
+	cancel(): Rhodium<
+		RhodiumFinalizedResult<R, E>,
+		CancelErrors.CannotBeCancelledError
+	> {
 		if (this.#childrenAmount !== null) {
 			if (this.#childrenAmount > 0) {
 				return Rhodium.reject(new CancelErrors.CannotBeCancelledError())
@@ -289,7 +309,7 @@ export class Rhodium<
 				if (--ancestor.#childrenAmount! > 0) break
 			}
 		}
-		return new Rhodium<void, never>(this.#promise.then(() => {}, () => {}))
+		return this.finalized()
 	}
 
 	/**

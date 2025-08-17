@@ -15,8 +15,9 @@ It has a type of `Rhodium<PossibleResolutions, PossibleRejections>`.
   - [Cancellation](#cancellation)
     - [Limitations](#limitations)
     - [But what about multiple `then` calls on a single Rhodium?](#but-what-about-multiple-then-calls-on-a-single-rhodium)
-    - [Return type of `cancel`](#return-type-of-cancel)
-      - [Early cancellation](#early-cancellation)
+  - [Finalization](#finalization)
+    - [`Rhodium.oneFinalized`](#rhodiumonefinalized)
+    - [Early cancellation](#early-cancellation)
   - [Additional methods \& syntax sugar](#additional-methods--syntax-sugar)
     - [`Rhodium.sleep`](#rhodiumsleep)
     - [`Rhodium.oneSettled`](#rhodiumonesettled)
@@ -58,7 +59,7 @@ Rhodium
 > All errors must be structurally distinct:
 > - ❌ `new SyntaxError` + `new TypeError`
 > - ✔️ `class ErrA { code = 1 as const }` + `class ErrB { code = 2 as const }`
-> 
+>
 > This is a TypeScript limitation. Any object containing another triggers a subtype reduction. Usually this object would be constructed by `Rhodium.reject()`, but this does work for everything, e.g., arrays:
 > ```ts
 > class ErrorA extends Error {}
@@ -117,6 +118,12 @@ setTimeout(() => myRhodium.cancel(), 500)
 ```
 ...then suddenly only `1` and `3` are printed. Invocation of `cancel` has prevented the second `console.log`!
 
+> [!IMPORTANT]
+> - `cancel` [returns a `Rhodium`](#rhodiumonefinalized), but it is actually **synchronous** at its core. Once `cancel` is run, its effects are immediate.
+> - If `Rhodium` rejects right before cancellation, the reason might get supressed. If `Rhodium` rejects during cancellation, the reason gets caught into [the returned value](#rhodiumonefinalized).
+
+In addition, [the described below limitation](#limitations) causes `cancel` to return a rejecting `Rhodium`, to preserve the [ease of handling errors](#error-tracking).
+
 #### Limitations
 
 > [!WARNING]
@@ -136,24 +143,39 @@ Only `D` and `G` would be cancellable, because they are at the ends of their cha
 - When `G` gets cancelled, so do `F` and then `E`.
 - **Only when both** `D` and `G` get cancelled, no matter the order, do `B` and `A` get cancelled as well.
 
-#### Return type of `cancel`
-`cancel` returns a `Rhodium`, but it is actually **synchronous** at its core. Once `cancel` is run, its effects are immediate.
+### Finalization
+#### `Rhodium.oneFinalized`
+*Also known as the resolution value of `cancel`.*
+Has a non-static shorthand called `Rhodium.finalized`.
 
-The returned `Rhodium` is **fullfilled** once the **currently running callback** and all of the following **`finally` callbacks** of the cancelled chain have been executed. Such new Rhodium is the beginning of a new chain.
+The returned `Rhodium` is **resolved** once
+- `this` `Rhodium` had [settled](#rhodiumonesettled), or
+- the **currently running callback** and all of the following **`finally` callbacks** of the cancelled chain had been executed.
+
+```ts
+Rhodium
+  .sleep(100)
+  .cancel()
+  .then(finalizationResult => /* == { status: "cancelled" } */)
+     // ^? RhodiumFinalizedResult<void, never>
+```
+
 > [!TIP]
-> This could be useful, for example,
-> - to show a loading throbber for the *exact* time the cancellation is in progress;
+> Awaiting finalization could be useful, for example, to
+> - show a loading throbber for the *exact* time the cancellation is in progress;
 > - wait for handles to close before possibly opening them again;
 > - suspense starting new chains, that use the same non-shareable resource, held by the cancelling chain;
+> - check for supressed errors, which one might want to rethrow;
 > - etc.
 
-In addition, [the described above limitation](#limitations) causes `cancel` to return a rejecting `Rhodium`, to preserve the [ease of handling errors](#error-tracking).
-
-##### Early cancellation
 > [!NOTE]
-> The currently running callback might take a lot of time to execute! If the time it takes for the result of `cancel` to fullfill is important, then it might be of interest to optimize this time.
-> 
-> Every callback (except the non-cancellable `finally`) is provided an **`AbortSignal`** as the second argument, which is triggered when that callback has been running at the time of `cancel`. Using this signal is completely optional - it is only an optimization.
+> The returned `Rhodium` is the beginning of a new chain. It is detached from the input `Rhodium`, and will not propagate cancellation to it.
+
+#### Early cancellation
+
+The currently running callback might take a lot of time to execute! If the time it takes for a Rhodium to *finalize* is important, then it might be of interest to optimize this time.
+
+Every callback (except the non-cancellable `finally`) is provided an **`AbortSignal`** as the second argument, which is triggered when that callback has been running at the time of `cancel`. Using this signal is completely optional - it is only an optimization.
 
 ### Additional methods & syntax sugar
 #### `Rhodium.sleep`
