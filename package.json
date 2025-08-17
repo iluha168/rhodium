@@ -24,7 +24,7 @@
 	"main": "dist/mod.mjs",
 	"types": "dist/mod.d.mts",
 	"scripts": {
-		"test": "deno check test && deno test",
+		"test": "deno check test && deno test --parallel",
 		"lint": "deno lint",
 		"lint:watch": "deno lint --watch --fix",
 		"fmt": "deno fmt",
