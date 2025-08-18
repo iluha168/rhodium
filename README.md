@@ -5,9 +5,22 @@
 [![NPM Downloads](https://img.shields.io/npm/d18m/rhodium?style=flat&label=npm%20downloads)](https://www.npmjs.com/package/rhodium?activeTab=versions)
 <!-- omit in toc -->
 # Rhodium
-A TypeScript `Promise` wrapper that adds syntax sugar and cancellation.
-It has a type of `Rhodium<PossibleResolutions, PossibleRejections>`.
+## About
+`Rhodium` is a TypeScript-first `Promise` alternative with error tracking, cancellation, common async utilities, and a sprinkle of syntax sugar.
 
+It uses native `Promise` internally, allowing for minimal performance loss.
+
+`Rhodium` implements all `Promise`'s static and non-static methods, making them cancellable and error-tracking as well.
+
+```ts
+import * as Rh from "rhodium" // Static methods
+import Rhodium from "rhodium" // Class
+```
+
+## Table of contents
+
+- [About](#about)
+- [Table of contents](#table-of-contents)
 - [Interoperability with `Promise`](#interoperability-with-promise)
 - [Features](#features)
   - [Error tracking](#error-tracking)
@@ -25,7 +38,6 @@ It has a type of `Rhodium<PossibleResolutions, PossibleRejections>`.
     - [`Rhodium.catchFilter`](#rhodiumcatchfilter)
 - [Inspired by](#inspired-by)
 
-
 ## Interoperability with `Promise`
 - `Rhodium` **is awaitable** at runtime, and `Awaited<T>` can be used to await it in types.
 - `Promise`, or any `PromiseLike`, **can be converted to `Rhodium`** by passing it to `Rhodium.resolve()` or `new Rhodium()`
@@ -34,8 +46,6 @@ It has a type of `Rhodium<PossibleResolutions, PossibleRejections>`.
 > Conversion to `Promise` loses [cancelability](#cancellation) and other `Rhodium`-exclusive [features](#features).
 
 ## Features
-`Rhodium` implements all `Promise`'s static and non-static methods.
-
 ### Error tracking
 Rhodium keeps track of all errors a `Rhodium` chain may reject with, if used correctly.
 ```ts
@@ -52,13 +62,13 @@ Rhodium
 ```
 
 > [!CAUTION]
-> This library assumes `throw` keyword is never used. **It is impossible to track types of `throw` errors.** `Rhodium` has a neverthrow philosophy; you should always use `Rhodium.reject()` instead. I suggest enforcing this rule if you decide to adopt `Rhodium`.
+> This library assumes `throw` keyword is never used. **It is impossible to track types of `throw` errors.** `Rhodium` has a neverthrow philosophy; you must always use `Rhodium.reject()` instead. I suggest enforcing this rule if you decide to adopt `Rhodium`.
 
 
 > [!CAUTION]
 > All errors must be structurally distinct:
-> - ❌ `new SyntaxError` + `new TypeError`
-> - ✔️ `class ErrA { code = 1 as const }` + `class ErrB { code = 2 as const }`
+> - ❌ `new SyntaxError` ≈ `new TypeError`
+> - ✔️ `class ErrA { code = 1 as const }` ≉ `class ErrB { code = 2 as const }`
 >
 > This is a TypeScript limitation. Any object containing another triggers a subtype reduction. Usually this object would be constructed by `Rhodium.reject()`, but this does work for everything, e.g., arrays:
 > ```ts
@@ -173,9 +183,11 @@ Rhodium
 
 #### Early cancellation
 
-The currently running callback might take a lot of time to execute! If the time it takes for a Rhodium to *finalize* is important, then it might be of interest to optimize this time.
+On `cancel`, the currently running callback will not be stopped, and it will delay finalization. If the time it takes for a Rhodium to finalize is important, then it might be of interest to optimize this time.
 
-Every callback (except the non-cancellable `finally`) is provided an **`AbortSignal`** as the second argument, which is triggered when that callback has been running at the time of `cancel`. Using this signal is completely optional - it is only an optimization.
+Every callback, attached by `then`, `catch`, etc. (except the non-cancellable `finally`) is provided an **`AbortSignal`** as the second argument, which is triggered when that callback has been running at the time of `cancel`. On signal, the callback should resolve as soon as possible.
+
+Using this signal is completely optional - it is only an optimization.
 
 ### Additional methods & syntax sugar
 #### `Rhodium.sleep`
