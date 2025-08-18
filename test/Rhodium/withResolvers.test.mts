@@ -1,5 +1,5 @@
 import { assertEquals, assertRejects } from "jsr:@std/assert"
-import { Rhodium } from "@/index.mts"
+import * as Rhodium from "@/mod.mts"
 
 Deno.test("reject", () => {
 	const { rhodium, reject } = Rhodium.withResolvers<"yes", "no">()

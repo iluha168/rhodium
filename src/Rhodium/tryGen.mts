@@ -1,4 +1,5 @@
 import { Rhodium } from "./index.mts"
+import { resolve } from "./resolve.mts"
 import type { Errored, Merged } from "./terminology.d.mts"
 
 /**
@@ -66,7 +67,7 @@ export function tryGen<
 			const { done, value } = queue[op](previous as never)
 			if (done) {
 				// Reached the end of the generator - value becomes the return value of tryGen itself.
-				pendingRh = Rhodium.resolve(value)
+				pendingRh = resolve(value)
 				return pendingRh.promise.then(
 					(value) =>
 						lastRejection ? rej(lastRejection.reason) : res(value),

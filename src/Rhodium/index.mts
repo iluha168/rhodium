@@ -6,19 +6,9 @@
 import type { Errored, Merged, ToRhodium } from "./terminology.d.mts"
 import type { isExcludeUnsafe } from "./internal/subtypeDetection.d.mts"
 import * as CancelErrors from "./CancelErrors.mts"
-import * as concurrency from "./concurrency.mts"
-import { withResolvers } from "./withResolvers.mts"
-import { Try } from "./try.mts"
-import { tryGen } from "./tryGen.mts"
-import { allSettled, oneSettled } from "./settled.mts"
-import {
-	allFinalized,
-	oneFinalized,
-	type RhodiumFinalizedResult,
-} from "./finalized.mts"
-import { resolve } from "./resolve.mts"
+import { oneSettled } from "./settled.mts"
+import { oneFinalized, type RhodiumFinalizedResult } from "./finalized.mts"
 import { reject } from "./reject.mts"
-import { sleep } from "./sleep.mts"
 import { cancellableCallback } from "./internal/cancellableCallback.mts"
 
 /**
@@ -78,25 +68,6 @@ export class Rhodium<
 			)
 			: Promise.resolve(arg)
 	}
-
-	static readonly withResolvers = withResolvers
-	static readonly resolve = resolve
-	static readonly reject = reject
-
-	static readonly all = concurrency.all
-	static readonly any = concurrency.any
-	static readonly race = concurrency.race
-
-	static readonly allSettled = allSettled
-	static readonly oneSettled = oneSettled
-
-	static readonly oneFinalized = oneFinalized
-	static readonly allFinalized = allFinalized
-
-	static readonly try = Try
-	static readonly tryGen = tryGen
-
-	static readonly sleep = sleep
 
 	/**
 	 * Attaches callbacks for the resolution and/or rejection of the Rhodium.
@@ -294,7 +265,7 @@ export class Rhodium<
 	> {
 		if (this.#childrenAmount !== null) {
 			if (this.#childrenAmount > 0) {
-				return Rhodium.reject(new CancelErrors.CannotBeCancelledError())
+				return reject(new CancelErrors.CannotBeCancelledError())
 			}
 			// `ancestor` is used to climb up the chain, with `this` as the starting point
 			// deno-lint-ignore no-this-alias
@@ -317,7 +288,9 @@ export class Rhodium<
 	 * This enables {@linkcode tryGen}.
 	 */
 	*[Symbol.iterator](): {
-		next(resolved: R | any): IteratorResult<Rhodium<R, E>, R>
+		next(
+			resolved: [never] extends [R] ? any : R,
+		): IteratorResult<Rhodium<R, E>, R>
 	} {
 		return yield this
 	}

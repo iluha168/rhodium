@@ -1,5 +1,5 @@
 import { assertAlmostEquals, assertEquals } from "jsr:@std/assert"
-import { Rhodium } from "@/index.mts"
+import * as Rhodium from "@/mod.mts"
 import { timed } from "../util/timed.ts"
 
 Deno.test("empty array", async () => {

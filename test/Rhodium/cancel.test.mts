@@ -4,11 +4,7 @@ import {
 	assertRejects,
 	assertThrows,
 } from "jsr:@std/assert"
-import { Rhodium } from "@/index.mts"
-import {
-	CannotAttachConsumerError,
-	CannotBeCancelledError,
-} from "@/CancelErrors.mts"
+import * as Rhodium from "@/mod.mts"
 import { timed } from "../util/timed.ts"
 
 Deno.test("cancel mid-chain", () => {
@@ -19,14 +15,14 @@ Deno.test("cancel mid-chain", () => {
 		midChain
 			.then(() => 2)
 		return midChain.cancel().promise
-	}, CannotBeCancelledError)
+	}, Rhodium.err.CannotBeCancelledError)
 })
 
 Deno.test("attach callback to a cancelled Rhodium", () => {
 	const { rhodium } = Rhodium.withResolvers()
 	rhodium.cancel()
-	assertThrows(() => rhodium.then(), CannotAttachConsumerError)
-	assertThrows(() => rhodium.catch(), CannotAttachConsumerError)
+	assertThrows(() => rhodium.then(), Rhodium.err.CannotAttachConsumerError)
+	assertThrows(() => rhodium.catch(), Rhodium.err.CannotAttachConsumerError)
 	rhodium.finally()
 })
 

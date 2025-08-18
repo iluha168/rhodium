@@ -1,12 +1,12 @@
 import { assertAlmostEquals, assertEquals } from "jsr:@std/assert"
-import { Rhodium } from "@/index.mts"
-import type { RhodiumSettledResult } from "@/settled.mts"
+import type Rh from "@/mod.mts"
+import * as Rhodium from "@/mod.mts"
 import { timed } from "../util/timed.ts"
 
 Deno.test("all never reject", async () => {
 	const result: [
-		RhodiumSettledResult<"res1", never>,
-		RhodiumSettledResult<"res2", never>,
+		Rhodium.RhodiumSettledResult<"res1", never>,
+		Rhodium.RhodiumSettledResult<"res2", never>,
 	] = await Rhodium.allSettled([
 		Rhodium.resolve("res1"),
 		Rhodium.resolve("res2"),
@@ -19,9 +19,9 @@ Deno.test("all never reject", async () => {
 
 Deno.test("one always rejects", async () => {
 	const result: [
-		RhodiumSettledResult<"res1", never>,
-		RhodiumSettledResult<"res2", never>,
-		RhodiumSettledResult<never, "err1">,
+		Rhodium.RhodiumSettledResult<"res1", never>,
+		Rhodium.RhodiumSettledResult<"res2", never>,
+		Rhodium.RhodiumSettledResult<never, "err1">,
 	] = await Rhodium.allSettled([
 		Rhodium.resolve("res1"),
 		Rhodium.resolve("res2"),
@@ -35,13 +35,13 @@ Deno.test("one always rejects", async () => {
 
 Deno.test("one sometimes rejects", async () => {
 	const result: [
-		RhodiumSettledResult<"res1", never>,
-		RhodiumSettledResult<"res2", never>,
-		RhodiumSettledResult<"res3", "err1">,
+		Rhodium.RhodiumSettledResult<"res1", never>,
+		Rhodium.RhodiumSettledResult<"res2", never>,
+		Rhodium.RhodiumSettledResult<"res3", "err1">,
 	] = await Rhodium.allSettled([
 		Rhodium.resolve("res1"),
 		Rhodium.resolve("res2"),
-		Rhodium.resolve("res3") as Rhodium<"res3", "err1">,
+		Rhodium.resolve("res3") as Rh<"res3", "err1">,
 	])
 	assertEquals(result, [{ status: "fulfilled", value: "res1" }, {
 		status: "fulfilled",
@@ -51,8 +51,8 @@ Deno.test("one sometimes rejects", async () => {
 
 Deno.test("all always reject", async () => {
 	const result: [
-		RhodiumSettledResult<never, "err2">,
-		RhodiumSettledResult<never, "err1">,
+		Rhodium.RhodiumSettledResult<never, "err2">,
+		Rhodium.RhodiumSettledResult<never, "err1">,
 	] = await Rhodium.allSettled([
 		Rhodium.reject("err2"),
 		Rhodium.reject("err1"),
