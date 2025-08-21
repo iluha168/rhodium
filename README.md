@@ -172,10 +172,8 @@ Rhodium
 
 > [!TIP]
 > Awaiting finalization could be useful, for example, to
-> - show a loading throbber for the *exact* time the cancellation is in progress;
-> - wait for handles to close before possibly opening them again;
 > - suspense starting new chains, that use the same non-shareable resource, held by the cancelling chain;
-> - check for supressed errors, which one might want to rethrow;
+> - check for supressed `cancel` errors, which one might want to rethrow;
 > - etc.
 
 > [!NOTE]
@@ -196,6 +194,10 @@ You no longer have to write the following boilerplate:
 new Promise(resolve => setTimeout(resolve, milliseconds))
 ```
 The same can now be written as `Rhodium.sleep(milliseconds)`, with the advantage of being [early cancellable](#early-cancellation).
+
+> [!NOTE]
+> `sleep` uses [`AbortSignal.timeout`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal/timeout_static) internally!
+> > The timeout is based on active rather than elapsed time, and will effectively be paused if the code is running in a suspended worker, or while the document is in a back-forward cache.
 
 #### `Rhodium.oneSettled`
 Same as `Promise.allSettled()`; except the rejection reason is properly typed, and it is applied to one `Rhodium` instead of an array.
