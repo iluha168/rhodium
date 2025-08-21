@@ -74,7 +74,7 @@ export function tryGen<
 					rej,
 				)
 			}
-			pendingRh = value as P
+			pendingRh = value
 			return pendingRh.promise.then(
 				(value) => {
 					// On cancellation, make sure to go to `finally` block and continue draining generator
