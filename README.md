@@ -8,7 +8,7 @@
 ## About
 `Rhodium` is a TypeScript-first `Promise` alternative with error tracking, cancellation, common async utilities, and a sprinkle of syntax sugar.
 
-It uses native `Promise` internally, allowing for minimal performance loss.
+It uses native `Promise` internally, resulting in minimal performance loss.
 
 `Rhodium` implements all `Promise`'s static and non-static methods, making them cancellable and error-tracking as well.
 
@@ -16,6 +16,8 @@ It uses native `Promise` internally, allowing for minimal performance loss.
 import * as Rh from "rhodium" // Static methods
 import Rhodium from "rhodium" // Class
 ```
+
+`Rhodium` depends on nothing but ES2020, and [AbortSignal](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal#browser_compatibility) with [AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController#browser_compatibility).
 
 ## Table of contents
 
