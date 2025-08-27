@@ -5,9 +5,24 @@
 [![NPM Downloads](https://img.shields.io/npm/d18m/rhodium?style=flat&label=npm%20downloads)](https://www.npmjs.com/package/rhodium?activeTab=versions)
 <!-- omit in toc -->
 # Rhodium
-A TypeScript `Promise` wrapper that adds syntax sugar and cancellation.
-It has a type of `Rhodium<PossibleResolutions, PossibleRejections>`.
+## About
+`Rhodium` is a TypeScript-first `Promise` alternative with error tracking, cancellation, common async utilities, and a sprinkle of syntax sugar.
 
+It uses native `Promise` internally, resulting in minimal performance loss.
+
+`Rhodium` implements all `Promise`'s static and non-static methods, making them cancellable and error-tracking as well.
+
+```ts
+import * as Rh from "rhodium" // Static methods
+import Rhodium from "rhodium" // Class
+```
+
+`Rhodium` depends on nothing but ES2020, and [AbortSignal](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal#browser_compatibility) with [AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController#browser_compatibility).
+
+## Table of contents
+
+- [About](#about)
+- [Table of contents](#table-of-contents)
 - [Interoperability with `Promise`](#interoperability-with-promise)
 - [Features](#features)
   - [Error tracking](#error-tracking)
@@ -15,15 +30,16 @@ It has a type of `Rhodium<PossibleResolutions, PossibleRejections>`.
   - [Cancellation](#cancellation)
     - [Limitations](#limitations)
     - [But what about multiple `then` calls on a single Rhodium?](#but-what-about-multiple-then-calls-on-a-single-rhodium)
-    - [Return type of `cancel`](#return-type-of-cancel)
-      - [Early cancellation](#early-cancellation)
+  - [Finalization](#finalization)
+    - [`Rhodium.oneFinalized`](#rhodiumonefinalized)
+    - [Early cancellation](#early-cancellation)
   - [Additional methods \& syntax sugar](#additional-methods--syntax-sugar)
     - [`Rhodium.sleep`](#rhodiumsleep)
     - [`Rhodium.oneSettled`](#rhodiumonesettled)
     - [`Rhodium.tryGen` - the `async` of Rhodium](#rhodiumtrygen---the-async-of-rhodium)
     - [`Rhodium.catchFilter`](#rhodiumcatchfilter)
+    - [`Rhodium.timeout`](#rhodiumtimeout)
 - [Inspired by](#inspired-by)
-
 
 ## Interoperability with `Promise`
 - `Rhodium` **is awaitable** at runtime, and `Awaited<T>` can be used to await it in types.
@@ -33,8 +49,6 @@ It has a type of `Rhodium<PossibleResolutions, PossibleRejections>`.
 > Conversion to `Promise` loses [cancelability](#cancellation) and other `Rhodium`-exclusive [features](#features).
 
 ## Features
-`Rhodium` implements all `Promise`'s static and non-static methods.
-
 ### Error tracking
 Rhodium keeps track of all errors a `Rhodium` chain may reject with, if used correctly.
 ```ts
@@ -51,14 +65,14 @@ Rhodium
 ```
 
 > [!CAUTION]
-> This library assumes `throw` keyword is never used. **It is impossible to track types of `throw` errors.** `Rhodium` has a neverthrow philosophy; you should always use `Rhodium.reject()` instead. I suggest enforcing this rule if you decide to adopt `Rhodium`.
+> This library assumes `throw` keyword is never used. **It is impossible to track types of `throw` errors.** `Rhodium` has a neverthrow philosophy; you must always use `Rhodium.reject()` instead. I suggest enforcing this rule if you decide to adopt `Rhodium`.
 
 
 > [!CAUTION]
 > All errors must be structurally distinct:
-> - ❌ `new SyntaxError` + `new TypeError`
-> - ✔️ `class ErrA { code = 1 as const }` + `class ErrB { code = 2 as const }`
-> 
+> - ❌ `new SyntaxError` ≈ `new TypeError`
+> - ✔️ `class ErrA { code = 1 as const }` ≉ `class ErrB { code = 2 as const }`
+>
 > This is a TypeScript limitation. Any object containing another triggers a subtype reduction. Usually this object would be constructed by `Rhodium.reject()`, but this does work for everything, e.g., arrays:
 > ```ts
 > class ErrorA extends Error {}
@@ -117,6 +131,12 @@ setTimeout(() => myRhodium.cancel(), 500)
 ```
 ...then suddenly only `1` and `3` are printed. Invocation of `cancel` has prevented the second `console.log`!
 
+> [!IMPORTANT]
+> - `cancel` [returns a `Rhodium`](#rhodiumonefinalized), but it is actually **synchronous** at its core. Once `cancel` is run, its effects are immediate.
+> - If `Rhodium` rejects right before cancellation, the reason might get supressed. If `Rhodium` rejects during cancellation, the reason gets caught into [the returned value](#rhodiumonefinalized).
+
+In addition, [the described below limitation](#limitations) causes `cancel` to return a rejecting `Rhodium`, to preserve the [ease of handling errors](#error-tracking).
+
 #### Limitations
 
 > [!WARNING]
@@ -136,24 +156,39 @@ Only `D` and `G` would be cancellable, because they are at the ends of their cha
 - When `G` gets cancelled, so do `F` and then `E`.
 - **Only when both** `D` and `G` get cancelled, no matter the order, do `B` and `A` get cancelled as well.
 
-#### Return type of `cancel`
-`cancel` returns a `Rhodium`, but it is actually **synchronous** at its core. Once `cancel` is run, its effects are immediate.
+### Finalization
+#### `Rhodium.oneFinalized`
+*Also known as the resolution value of `cancel`.*
+Has a non-static shorthand called `Rhodium.finalized`.
 
-The returned `Rhodium` is **fullfilled** once the **currently running callback** and all of the following **`finally` callbacks** of the cancelled chain have been executed. Such new Rhodium is the beginning of a new chain.
+The returned `Rhodium` is **resolved** once
+- `this` `Rhodium` had [settled](#rhodiumonesettled), or
+- the **currently running callback** and all of the following **`finally` callbacks** of the cancelled chain had been executed.
+
+```ts
+Rhodium
+  .sleep(100)
+  .cancel()
+  .then(finalizationResult => /* == { status: "cancelled" } */)
+     // ^? RhodiumFinalizedResult<void, never>
+```
+
 > [!TIP]
-> This could be useful, for example,
-> - to show a loading throbber for the *exact* time the cancellation is in progress;
-> - wait for handles to close before possibly opening them again;
+> Awaiting finalization could be useful, for example, to
 > - suspense starting new chains, that use the same non-shareable resource, held by the cancelling chain;
+> - check for supressed `cancel` errors, which one might want to rethrow;
 > - etc.
 
-In addition, [the described above limitation](#limitations) causes `cancel` to return a rejecting `Rhodium`, to preserve the [ease of handling errors](#error-tracking).
-
-##### Early cancellation
 > [!NOTE]
-> The currently running callback might take a lot of time to execute! If the time it takes for the result of `cancel` to fullfill is important, then it might be of interest to optimize this time.
-> 
-> Every callback (except the non-cancellable `finally`) is provided an **`AbortSignal`** as the second argument, which is triggered when that callback has been running at the time of `cancel`. Using this signal is completely optional - it is only an optimization.
+> The returned `Rhodium` is the beginning of a new chain. It is detached from the input `Rhodium`, and will not propagate cancellation to it.
+
+#### Early cancellation
+
+On `cancel`, the currently running callback will not be stopped, and it will delay finalization. If the time it takes for a Rhodium to finalize is important, then it might be of interest to optimize this time.
+
+Every callback, attached by `then`, `catch`, etc. (except the non-cancellable `finally`) is provided an **`AbortSignal`** as the second argument, which is triggered when that callback has been running at the time of `cancel`. On signal, the callback should resolve as soon as possible.
+
+Using this signal is completely optional - it is only an optimization.
 
 ### Additional methods & syntax sugar
 #### `Rhodium.sleep`
@@ -162,6 +197,10 @@ You no longer have to write the following boilerplate:
 new Promise(resolve => setTimeout(resolve, milliseconds))
 ```
 The same can now be written as `Rhodium.sleep(milliseconds)`, with the advantage of being [early cancellable](#early-cancellation).
+
+> [!NOTE]
+> `sleep` uses [`AbortSignal.timeout`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal/timeout_static) internally!
+> > The timeout is based on active rather than elapsed time, and will effectively be paused if the code is running in a suspended worker, or while the document is in a back-forward cache.
 
 #### `Rhodium.oneSettled`
 Same as `Promise.allSettled()`; except the rejection reason is properly typed, and it is applied to one `Rhodium` instead of an array.
@@ -224,6 +263,17 @@ myRhodium.catchFilter(
   err => err instanceof ErrorA,
   (err /* : ErrorA */) => "handled ErrorA" as const
 ) // <? Rhodium<Data | "handled ErrorA", ErrorB>
+```
+
+#### `Rhodium.timeout`
+Attaches a time constraint to a Rhodium.
+If it fails to [settle](#rhodiumonesettled) in the given time, chains after `timeout` get a rejection, and chain before `timeout` gets cancelled.
+
+```ts
+Rhodium
+  .sleep(10000)
+  .timeout(10) // Uh oh, this rejects, sleep takes too long
+  .finalized() // Resolves quickly, because sleep is cancelled!
 ```
 
 ## Inspired by

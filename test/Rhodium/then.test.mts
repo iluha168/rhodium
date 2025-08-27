@@ -1,11 +1,12 @@
 import { assertAlmostEquals, assertEquals } from "jsr:@std/assert"
-import { Rhodium } from "@/index.mts"
+import type Rh from "@/mod.mts"
+import * as Rhodium from "@/mod.mts"
 import { timed } from "../util/timed.ts"
 
 /// NO CALLBACKS
 
 Deno.test("does nothing with no args", async () => {
-	const promise: Rhodium<"str", never> = Rhodium
+	const promise: Rh<"str", never> = Rhodium
 		.resolve("str")
 		.then()
 		.then()
@@ -16,28 +17,28 @@ Deno.test("does nothing with no args", async () => {
 /// FIRST CALLBACK
 
 Deno.test("returns a number", async () => {
-	const promise: Rhodium<number, never> = Rhodium
+	const promise: Rh<number, never> = Rhodium
 		.resolve()
 		.then(() => 5)
 	assertEquals(await promise, 5)
 })
 
 Deno.test("returns a const number", async () => {
-	const promise: Rhodium<5, never> = Rhodium
+	const promise: Rh<5, never> = Rhodium
 		.resolve()
 		.then(() => 5 as const)
 	assertEquals(await promise, 5)
 })
 
 Deno.test("returns a Promise", async () => {
-	const promise: Rhodium<number, unknown> = Rhodium
+	const promise: Rh<number, unknown> = Rhodium
 		.resolve()
 		.then(() => Promise.resolve(7))
 	assertEquals(await promise, 7)
 })
 
 Deno.test("returns a Rhodium", async () => {
-	const promise: Rhodium<8, never> = Rhodium
+	const promise: Rh<8, never> = Rhodium
 		.resolve()
 		.then(() => Rhodium.resolve(8))
 	assertEquals(await promise, 8)
@@ -78,28 +79,28 @@ Deno.test("resolution is cancellable", async () => {
 /// SECOND CALLBACK
 
 Deno.test("handles with a number", async () => {
-	const promise: Rhodium<number, never> = Rhodium
+	const promise: Rh<number, never> = Rhodium
 		.reject()
 		.then(null, () => 5)
 	assertEquals(await promise, 5)
 })
 
 Deno.test("handles with a const number", async () => {
-	const promise: Rhodium<5, never> = Rhodium
+	const promise: Rh<5, never> = Rhodium
 		.reject()
 		.then(null, () => 5 as const)
 	assertEquals(await promise, 5)
 })
 
 Deno.test("handles with a Promise", async () => {
-	const promise: Rhodium<number, unknown> = Rhodium
+	const promise: Rh<number, unknown> = Rhodium
 		.reject()
 		.then(null, () => Promise.resolve(7))
 	assertEquals(await promise, 7)
 })
 
 Deno.test("handles with a Rhodium", async () => {
-	const promise: Rhodium<8, never> = Rhodium
+	const promise: Rh<8, never> = Rhodium
 		.reject()
 		.then(null, () => Rhodium.resolve(8))
 	assertEquals(await promise, 8)
@@ -140,14 +141,14 @@ Deno.test("rejection is cancellable", async () => {
 /// BOTH CALLBACKS
 
 Deno.test("outputs combine", async () => {
-	const promise: Rhodium<number | string, never> = Rhodium
+	const promise: Rh<number | string, never> = Rhodium
 		.resolve()
 		.then(() => 1, () => Rhodium.resolve(""))
 	assertEquals(await promise, 1)
 })
 
 Deno.test("errors from first callback are not handled", async () => {
-	const promise: Rhodium<"errAbove", "errHandler"> = Rhodium
+	const promise: Rh<"errAbove", "errHandler"> = Rhodium
 		.reject("errAbove")
 		.then(
 			() => Rhodium.reject("errHandler"),

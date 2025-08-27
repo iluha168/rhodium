@@ -3,12 +3,13 @@ import {
 	assertEquals,
 	assertRejects,
 } from "jsr:@std/assert"
-import { Rhodium } from "@/index.mts"
+import type Rh from "@/mod.mts"
+import * as Rhodium from "@/mod.mts"
 import { timed } from "../util/timed.ts"
 
 Deno.test("collapses all possible return types", async () => {
 	const getPromise = () => {
-		const promise: Rhodium<"couldMakeErr1", "err1"> = Rhodium
+		const promise: Rh<"couldMakeErr1", "err1"> = Rhodium
 			.try(
 				(chance) =>
 					chance > 0.5

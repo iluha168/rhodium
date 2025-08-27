@@ -1,4 +1,4 @@
-import { Rhodium } from "@/index.mts"
+import * as Rhodium from "@/mod.mts"
 
 export const timed = <C extends () => unknown>(callback: C) =>
 	Rhodium

@@ -3,7 +3,7 @@ import {
 	assertEquals,
 	assertStrictEquals,
 } from "jsr:@std/assert"
-import { Rhodium } from "@/index.mts"
+import * as Rhodium from "@/mod.mts"
 import { timed } from "../util/timed.ts"
 
 Deno.test("resolve void", async () => {

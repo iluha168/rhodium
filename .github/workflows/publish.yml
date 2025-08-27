@@ -34,4 +34,4 @@ jobs:
                   token: ${{ secrets.NPM_TOKEN }}
 
             - name: JSR
-              run: npx jsr publish
+              run: deno publish

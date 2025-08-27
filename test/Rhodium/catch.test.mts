@@ -1,6 +1,6 @@
 import { assertEquals, assertRejects } from "jsr:@std/assert"
-import type { Errored } from "@/terminology.d.mts"
-import { Rhodium } from "@/index.mts"
+import type { Errored, Rhodium as Rh } from "@/mod.mts"
+import * as Rhodium from "@/mod.mts"
 
 Deno.test("does nothing with no args", () => {
 	assertRejects(() => {
@@ -14,14 +14,14 @@ Deno.test("does nothing with no args", () => {
 })
 
 Deno.test("removes error type", async () => {
-	const promise: Rhodium<"handled", never> = Rhodium
+	const promise: Rh<"handled", never> = Rhodium
 		.reject("err")
 		.catch(() => "handled" as const)
 	assertEquals(await promise, "handled")
 })
 
 Deno.test("infers callback argument type", async () => {
-	const promise: Rhodium<"err1", never> = Rhodium
+	const promise: Rh<"err1", never> = Rhodium
 		.reject("err1")
 		.catch((err) => {
 			const check: "err1" = err

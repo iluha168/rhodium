@@ -1,9 +1,9 @@
-import { Rhodium } from "@/index.mts"
 import {
 	assertAlmostEquals,
 	assertEquals,
 	assertRejects,
 } from "jsr:@std/assert"
+import * as Rhodium from "@/mod.mts"
 import { timed } from "../util/timed.ts"
 
 Deno.test("yield* awaits", async () => {
@@ -88,11 +88,11 @@ Deno.test("try {} finally {} is called in cancellation", async () => {
 Deno.test("cancellable 1", async () => {
 	const rhodium = Rhodium
 		.tryGen(function* () {
-			yield* Rhodium.sleep(200)
-			yield* Rhodium.sleep(200)
-		}).then(() => Rhodium.sleep(200))
+			yield* Rhodium.sleep(100)
+			yield* Rhodium.sleep(100)
+		}).then(() => Rhodium.sleep(100))
 
-	await Rhodium.sleep(150)
+	await Rhodium.sleep(50)
 
 	assertAlmostEquals(await timed(() => rhodium.cancel()), 0, 15)
 })
@@ -100,11 +100,11 @@ Deno.test("cancellable 1", async () => {
 Deno.test("cancellable 2", async () => {
 	const rhodium = Rhodium
 		.tryGen(function* () {
-			yield* Rhodium.sleep(200)
-			yield* Rhodium.sleep(200)
-		}).then(() => Rhodium.sleep(200))
+			yield* Rhodium.sleep(100)
+			yield* Rhodium.sleep(100)
+		}).then(() => Rhodium.sleep(100))
 
-	await Rhodium.sleep(250)
+	await Rhodium.sleep(150)
 
 	assertAlmostEquals(await timed(() => rhodium.cancel()), 0, 15)
 })

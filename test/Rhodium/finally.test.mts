@@ -1,8 +1,9 @@
 import { assertAlmostEquals, assertEquals } from "jsr:@std/assert"
-import { Rhodium } from "@/index.mts"
+import type Rh from "@/mod.mts"
+import * as Rhodium from "@/mod.mts"
 
 Deno.test("does nothing with no args", async () => {
-	const promise: Rhodium<"str", never> = Rhodium
+	const promise: Rh<"str", never> = Rhodium
 		.resolve("str")
 		.finally()
 		.finally()
@@ -12,7 +13,7 @@ Deno.test("does nothing with no args", async () => {
 })
 
 Deno.test("does not affect return type", async () => {
-	const promise: Rhodium<number, never> = Rhodium
+	const promise: Rh<number, never> = Rhodium
 		.resolve()
 		.then(() => 5)
 		.finally(() => "str")
@@ -21,7 +22,7 @@ Deno.test("does not affect return type", async () => {
 
 Deno.test("is called in a rejection", async () => {
 	let modifyMe = 0
-	const promise: Rhodium<string, never> = Rhodium
+	const promise: Rh<string, never> = Rhodium
 		.reject()
 		.finally(() => modifyMe = 1)
 		.catch(() => "caught!")
@@ -32,7 +33,7 @@ Deno.test("is called in a rejection", async () => {
 
 Deno.test("is awaited", async () => {
 	const ms = 200
-	const promise: Rhodium<number, never> = Rhodium
+	const promise: Rh<number, never> = Rhodium
 		.resolve(8)
 		.then(() => performance.now())
 		.finally(() => Rhodium.sleep(ms))

@@ -5,15 +5,11 @@
 
 import type { Errored, Merged, ToRhodium } from "./terminology.d.mts"
 import type { isExcludeUnsafe } from "./internal/subtypeDetection.d.mts"
-import * as CancelErrors from "./CancelErrors.mts"
-import * as concurrency from "./concurrency.mts"
-import { withResolvers } from "./withResolvers.mts"
-import { Try } from "./try.mts"
-import { tryGen } from "./tryGen.mts"
-import { allSettled, oneSettled } from "./settled.mts"
-import { resolve } from "./resolve.mts"
+import * as CancelErrors from "./err/CancelErrors.mts"
+import * as TimeoutErrors from "./err/TimeoutErrors.mts"
+import { oneSettled } from "./settled.mts"
+import { oneFinalized, type RhodiumFinalizedResult } from "./finalized.mts"
 import { reject } from "./reject.mts"
-import { sleep } from "./sleep.mts"
 import { cancellableCallback } from "./internal/cancellableCallback.mts"
 
 /**
@@ -73,22 +69,6 @@ export class Rhodium<
 			)
 			: Promise.resolve(arg)
 	}
-
-	static readonly withResolvers = withResolvers
-	static readonly resolve = resolve
-	static readonly reject = reject
-
-	static readonly all = concurrency.all
-	static readonly any = concurrency.any
-	static readonly race = concurrency.race
-
-	static readonly allSettled = allSettled
-	static readonly oneSettled = oneSettled
-
-	static readonly try = Try
-	static readonly tryGen = tryGen
-
-	static readonly sleep = sleep
 
 	/**
 	 * Attaches callbacks for the resolution and/or rejection of the Rhodium.
@@ -190,18 +170,42 @@ export class Rhodium<
 	}
 
 	/**
+	 * Attaches a time constraint to *this* Rhodium.
+	 * The resolution and rejection values are passed through.
+	 *
+	 * If it fails to {@link settled settle} in the given time, {@linkcode TimeoutErrors.TimeoutError TimeoutError} is rejected,
+	 * and this Rhodium gets {@link cancel cancelled} as an optimization,
+	 * because the fact of its settlement would not matter anymore.
+	 *
+	 * @param ms Amount of milliseconds to wait before rejecting.
+	 */
+	timeout(ms: number): Merged<Rhodium<R, E | TimeoutErrors.TimeoutError>> {
+		return new Rhodium((res, rej, signal) => {
+			this.then(res, rej) // Attaches a child
+			const attemptCancel = () => {
+				this.#childrenAmount!-- // "Detaches" a child
+				this.cancel().#promise.catch(() => {})
+			}
+
+			AbortSignal.timeout(ms).addEventListener("abort", () => {
+				rej(new TimeoutErrors.TimeoutError())
+				attemptCancel()
+			}, { signal })
+
+			signal.addEventListener("abort", () => {
+				;(res as () => void)() // Safe because cancellation must be triggered at the end of a chain
+				attemptCancel()
+			})
+		})
+	}
+
+	/**
 	 * Nested {@linkcode Promise} object this {@linkcode Rhodium} was created with.
 	 */
 	get promise(): Promise<R> {
 		return this.#promise
 	}
 	#promise: Promise<R>
-
-	/**
-	 * Is required to disable subtype reduction.
-	 * Does not exist at runtime.
-	 */
-	declare private error?: E
 
 	// -------------------------- Cancellation --------------------------
 
@@ -262,6 +266,15 @@ export class Rhodium<
 	}
 
 	/**
+	 * Creates a Rhodium that is resolved when the provided value finalizes.
+	 * Finalization is a superset of both {@link cancel cancellation} and {@link settled settlement}.
+	 * In case of cancellation, returned Rhodium will only resolve when all {@linkcode finally} callbacks have been executed.
+	 */
+	finalized(): ReturnType<typeof oneFinalized<R, E>> {
+		return oneFinalized(this)
+	}
+
+	/**
 	 * **Synchronous, even though it does return Rhodium.**
 	 *
 	 * Must be called on the last {@linkcode Rhodium} of its chain.
@@ -269,12 +282,15 @@ export class Rhodium<
 	 *
 	 * Cancels this Rhodium, and the preceding Rhodiums, up to the root *or* the point of divergence from another pending chain.
 	 * Cancelled Rhodiums do not execute their consumers, except for {@linkcode finally}.
-	 * @returns a Rhodium for the completion of all {@linkcode finally} in the chain.
+	 * @returns Calls {@linkcode finalized} and returns the result.
 	 */
-	cancel(): Rhodium<void, CancelErrors.CannotBeCancelledError> {
+	cancel(): Rhodium<
+		RhodiumFinalizedResult<R, E>,
+		CancelErrors.CannotBeCancelledError
+	> {
 		if (this.#childrenAmount !== null) {
 			if (this.#childrenAmount > 0) {
-				return Rhodium.reject(new CancelErrors.CannotBeCancelledError())
+				return reject(new CancelErrors.CannotBeCancelledError())
 			}
 			// `ancestor` is used to climb up the chain, with `this` as the starting point
 			// deno-lint-ignore no-this-alias
@@ -289,7 +305,7 @@ export class Rhodium<
 				if (--ancestor.#childrenAmount! > 0) break
 			}
 		}
-		return new Rhodium<void, never>(this.#promise.then(() => {}, () => {}))
+		return this.finalized()
 	}
 
 	/**
@@ -297,7 +313,9 @@ export class Rhodium<
 	 * This enables {@linkcode tryGen}.
 	 */
 	*[Symbol.iterator](): {
-		next(resolved: R | any): IteratorResult<Rhodium<R, E>, R>
+		next(
+			resolved: [never] extends [R] ? any : R,
+		): IteratorResult<Rhodium<R, E>, R>
 	} {
 		return yield this
 	}
