@@ -5,7 +5,8 @@
 
 import type { Errored, Merged, ToRhodium } from "./terminology.d.mts"
 import type { isExcludeUnsafe } from "./internal/subtypeDetection.d.mts"
-import * as CancelErrors from "./CancelErrors.mts"
+import * as CancelErrors from "./err/CancelErrors.mts"
+import * as TimeoutErrors from "./err/TimeoutErrors.mts"
 import { oneSettled } from "./settled.mts"
 import { oneFinalized, type RhodiumFinalizedResult } from "./finalized.mts"
 import { reject } from "./reject.mts"
@@ -169,18 +170,42 @@ export class Rhodium<
 	}
 
 	/**
+	 * Attaches a time constraint to *this* Rhodium.
+	 * The resolution and rejection values are passed through.
+	 *
+	 * If it fails to {@link settled settle} in the given time, {@linkcode TimeoutErrors.TimeoutError TimeoutError} is rejected,
+	 * and this Rhodium gets {@link cancel cancelled} as an optimization,
+	 * because the fact of its settlement would not matter anymore.
+	 *
+	 * @param ms Amount of milliseconds to wait before rejecting.
+	 */
+	timeout(ms: number): Merged<Rhodium<R, E | TimeoutErrors.TimeoutError>> {
+		return new Rhodium((res, rej, signal) => {
+			this.then(res, rej) // Attaches a child
+			const attemptCancel = () => {
+				this.#childrenAmount!-- // "Detaches" a child
+				this.cancel().#promise.catch(() => {})
+			}
+
+			AbortSignal.timeout(ms).addEventListener("abort", () => {
+				rej(new TimeoutErrors.TimeoutError())
+				attemptCancel()
+			}, { signal })
+
+			signal.addEventListener("abort", () => {
+				;(res as () => void)() // Safe because cancellation must be triggered at the end of a chain
+				attemptCancel()
+			})
+		})
+	}
+
+	/**
 	 * Nested {@linkcode Promise} object this {@linkcode Rhodium} was created with.
 	 */
 	get promise(): Promise<R> {
 		return this.#promise
 	}
 	#promise: Promise<R>
-
-	/**
-	 * Is required to disable subtype reduction.
-	 * Does not exist at runtime.
-	 */
-	declare private error?: E
 
 	// -------------------------- Cancellation --------------------------
 
@@ -257,7 +282,7 @@ export class Rhodium<
 	 *
 	 * Cancels this Rhodium, and the preceding Rhodiums, up to the root *or* the point of divergence from another pending chain.
 	 * Cancelled Rhodiums do not execute their consumers, except for {@linkcode finally}.
-	 * @returns Calls {@linkcode final} and returns the result.
+	 * @returns Calls {@linkcode finalized} and returns the result.
 	 */
 	cancel(): Rhodium<
 		RhodiumFinalizedResult<R, E>,

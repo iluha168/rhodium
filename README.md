@@ -38,6 +38,7 @@ import Rhodium from "rhodium" // Class
     - [`Rhodium.oneSettled`](#rhodiumonesettled)
     - [`Rhodium.tryGen` - the `async` of Rhodium](#rhodiumtrygen---the-async-of-rhodium)
     - [`Rhodium.catchFilter`](#rhodiumcatchfilter)
+    - [`Rhodium.timeout`](#rhodiumtimeout)
 - [Inspired by](#inspired-by)
 
 ## Interoperability with `Promise`
@@ -262,6 +263,17 @@ myRhodium.catchFilter(
   err => err instanceof ErrorA,
   (err /* : ErrorA */) => "handled ErrorA" as const
 ) // <? Rhodium<Data | "handled ErrorA", ErrorB>
+```
+
+#### `Rhodium.timeout`
+Attaches a time constraint to a Rhodium.
+If it fails to [settle](#rhodiumonesettled) in the given time, chains after `timeout` get a rejection, and chain before `timeout` gets cancelled.
+
+```ts
+Rhodium
+  .sleep(10000)
+  .timeout(10) // Uh oh, this rejects, sleep takes too long
+  .finalized() // Resolves quickly, because sleep is cancelled!
 ```
 
 ## Inspired by
