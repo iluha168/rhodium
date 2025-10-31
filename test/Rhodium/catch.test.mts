@@ -1,4 +1,4 @@
-import { assertEquals, assertRejects } from "jsr:@std/assert"
+import { assertEquals, assertRejects } from "assert"
 import type { Errored, Rhodium as Rh } from "@/mod.mts"
 import * as Rhodium from "@/mod.mts"
 
