@@ -1,19 +1,17 @@
 import { Rhodium } from "./index.mts"
+import { reject } from "./reject.mts"
 import { resolve } from "./resolve.mts"
 import type { Errored, Merged } from "./terminology.d.mts"
 
 /**
  * Resolves each Rhodium yielded by {@linkcode generator} one by one.
- * Allows writing asynchronous code imperatively: `for`, `if`, `while`, `switch`, `const`, `let` statements, etc.
+ * Allows writing asynchronous code imperatively: `for`, `if`, `while`, `switch`, `const`, `using` statements, etc.
  * Works similarly to `async` functions, except that `async` is written as `function*`, and `await` - as `yield*`.
  *
- * To ensure type-safety, **`try {} catch {}` will not catch errors**. Rejections will always be propagated down the chain.
- * Use the error handling tools provided by Rhodium, such as `catch`
- *
- * However, `try {} finally {}` will always execute its `finally` block, even in an event of cancellation.
+ * `try {} finally {}` will always execute its `finally` block, even in an event of cancellation.
  *
  * @returns a Rhodium that is fullfilled with the awaited return value of {@linkcode generator}, or
- * rejected when any yielded Rhodium rejects.
+ * rejected when generator rejects.
  * @example
  * ```
  * Rhodium.tryGen(function* () {
@@ -53,28 +51,28 @@ export function tryGen<
 		 */
 		let wasRecentlyCancelled = false
 
-		let lastRejection: null | { reason: any } = null
-
 		/**
 		 * Internally, {@linkcode tryGen} is a Promise chain, which makes it not cancellable.
 		 * This is necessary to reimplement proper cancellation, because the chain expands on demand, one Rhodium at a time
 		 * (we cannot distinguish between `finally` callbacks inside the {@linkcode generator} - everything is a `then`).
 		 */
 		const deQueue = (
-			op: "next" | "return",
+			op: "next" | "return" | "throw",
 			previous?: any,
 		): Promise<unknown> => {
-			const { done, value } = queue[op](previous as never)
+			let done, value
+			try {
+				;({ done, value } = queue[op](previous as never))
+			} catch (e) {
+				done = true
+				value = reject(e)
+			}
 			if (done) {
 				// Reached the end of the generator - value becomes the return value of tryGen itself.
 				pendingRh = resolve(value)
-				return pendingRh.promise.then(
-					(value) =>
-						lastRejection ? rej(lastRejection.reason) : res(value),
-					rej,
-				)
+				return pendingRh.promise.then(res, rej)
 			}
-			pendingRh = value
+			pendingRh = value as P
 			return pendingRh.promise.then(
 				(value) => {
 					// On cancellation, make sure to go to `finally` block and continue draining generator
@@ -86,8 +84,8 @@ export function tryGen<
 					return link
 				},
 				(reason) => {
-					lastRejection = { reason }
-					return deQueue("return", reason)
+					wasRecentlyCancelled = false
+					return deQueue("throw", reason)
 				},
 			)
 		}

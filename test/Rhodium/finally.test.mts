@@ -1,4 +1,4 @@
-import { assertAlmostEquals, assertEquals } from "jsr:@std/assert"
+import { assertAlmostEquals, assertEquals } from "assert"
 import type Rh from "@/mod.mts"
 import * as Rhodium from "@/mod.mts"
 

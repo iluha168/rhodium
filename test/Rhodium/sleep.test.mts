@@ -1,5 +1,5 @@
 import * as Rhodium from "@/mod.mts"
-import { assertAlmostEquals } from "jsr:@std/assert"
+import { assertAlmostEquals } from "assert"
 
 for (const sleepMS of [20, 50, 100, 200, 500]) {
 	Deno.test("sleep " + sleepMS, async () => {

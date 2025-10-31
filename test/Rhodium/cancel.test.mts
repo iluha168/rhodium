@@ -3,7 +3,7 @@ import {
 	assertEquals,
 	assertRejects,
 	assertThrows,
-} from "jsr:@std/assert"
+} from "assert"
 import * as Rhodium from "@/mod.mts"
 import { timed } from "../util/timed.ts"
 

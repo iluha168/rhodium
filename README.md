@@ -233,13 +233,14 @@ Executes a generator function, that is now able to type-safely `await` Rhodiums,
 
 The return value of the generator becomes the resolution value of `tryGen`.
 
-> [!CAUTION]
+> [!TIP]
 > The generator function is free to
-> - never exit;
-> - use any JavaScript constructs such as `while`, `for`, `switch`, `if`, etc.;
+> - never return;
+> - use any JavaScript constructs such as `while`, `for`, `switch`, `if`, `using`, etc.;
 > - `yield*` other such generators, including itself;
->
-> **but it cannot utilize `try {} catch {}`**. The `catch` block will never be executed, as a part of [the neverthrow philosophy](#error-tracking). Any unhandled rejection will move the generator's execution to the `finally` block, if there is one, and after it completes, `tryGen` will reject.
+
+> [!WARNING]
+> But it cannot use `await` (including `await using` and `for await`), because it is not actually an `async` function.
 
 ```ts
 Rhodium.tryGen(function* () {

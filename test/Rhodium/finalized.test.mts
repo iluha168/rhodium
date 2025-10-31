@@ -1,4 +1,4 @@
-import { assertAlmostEquals, assertEquals } from "jsr:@std/assert"
+import { assertAlmostEquals, assertEquals } from "assert"
 import * as Rhodium from "@/mod.mts"
 import { timed } from "../util/timed.ts"
 

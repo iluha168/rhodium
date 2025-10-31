@@ -1,8 +1,4 @@
-import {
-	assertAlmostEquals,
-	assertEquals,
-	assertRejects,
-} from "jsr:@std/assert"
+import { assert, assertAlmostEquals, assertEquals, assertRejects } from "assert"
 import * as Rhodium from "@/mod.mts"
 import { timed } from "../util/timed.ts"
 
@@ -24,16 +20,24 @@ Deno.test("return awaits", async () => {
 	assertEquals(three, 3)
 })
 
-Deno.test("try {} catch {} does nothing", async () => {
-	const zero = await Rhodium.tryGen(function* () {
+Deno.test("throw", () => {
+	assertRejects(() =>
+		Rhodium.tryGen(function* () {
+			yield* Rhodium.resolve(1)
+			throw new EvalError()
+		}).promise, EvalError)
+})
+
+Deno.test("try {} catch {}", async () => {
+	const two = await Rhodium.tryGen(function* () {
 		try {
 			yield* Rhodium.reject(0)
 			return 1
 		} catch {
 			return 2
 		}
-	}).catch((zero) => zero)
-	assertEquals(zero, 0)
+	}).then((two) => two, (zero) => zero)
+	assertEquals(two, 2)
 })
 
 Deno.test("try {} finally {} is called in resolution", async () => {
@@ -149,4 +153,27 @@ Deno.test("try {} finally {} can replace rejection reason", () => {
 				yield* Rhodium.reject(new TypeError())
 			}
 		}).promise, TypeError)
+})
+
+Deno.test("using", async () => {
+	let disposed = false
+	const disposable = {
+		[Symbol.dispose]() {
+			disposed = true
+		},
+	}
+
+	await Rhodium.tryGen(function* () {
+		yield* Rhodium.sleep(10)
+		using _tmp = disposable
+		yield* Rhodium.sleep(10)
+	})
+	assert(disposed)
+
+	disposed = false
+	await Rhodium.tryGen(function* () {
+		using _tmp = disposable
+		yield* Rhodium.reject()
+	}).settled()
+	assert(disposed)
 })
