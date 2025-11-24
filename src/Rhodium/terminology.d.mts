@@ -1,4 +1,4 @@
-import type { Rhodium } from "./index.mts"
+import type { Rhodium } from "./Rhodium.mts"
 import type { doesReduceTo } from "./internal/subtypeDetection.d.mts"
 
 /**

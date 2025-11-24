@@ -1,4 +1,4 @@
-import { Rhodium } from "../index.mts"
+import { Rhodium } from "../Rhodium.mts"
 
 export const Cancelled: unique symbol = Symbol()
 

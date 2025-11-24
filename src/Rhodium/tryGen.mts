@@ -1,4 +1,4 @@
-import { Rhodium } from "./index.mts"
+import { Rhodium } from "./Rhodium.mts"
 import { reject } from "./reject.mts"
 import { resolve } from "./resolve.mts"
 import type { Errored, Merged } from "./terminology.d.mts"

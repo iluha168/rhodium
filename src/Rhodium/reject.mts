@@ -1,4 +1,4 @@
-import { Rhodium } from "./index.mts"
+import { Rhodium } from "./Rhodium.mts"
 import type { Merged } from "./terminology.d.mts"
 
 /**

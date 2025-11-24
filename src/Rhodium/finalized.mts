@@ -1,4 +1,4 @@
-import { Rhodium } from "./index.mts"
+import { Rhodium } from "./Rhodium.mts"
 import { cancelAllWhenCancelled } from "./internal/cancelAllWhenCancelled.mts"
 import { Cancelled } from "./internal/cancellableCallback.mts"
 import type { RhodiumSettledResult } from "./settled.mts"

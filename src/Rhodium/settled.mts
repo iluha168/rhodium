@@ -1,4 +1,4 @@
-import { Rhodium } from "./index.mts"
+import { Rhodium } from "./Rhodium.mts"
 import { cancelAllWhenCancelled } from "./internal/cancelAllWhenCancelled.mts"
 import type { Errored } from "./terminology.d.mts"
 
