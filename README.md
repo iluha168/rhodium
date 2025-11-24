@@ -44,7 +44,7 @@ import Rhodium from "rhodium" // Class
 ## Interoperability with `Promise`
 - `Rhodium` **is awaitable** at runtime, and `Awaited<T>` can be used to await it in types.
 - `Promise`, or any `PromiseLike`, **can be converted to `Rhodium`** by passing it to `Rhodium.resolve()` or `new Rhodium()`
-- Is **convertable to `Promise`**. Simply get the **`promise` property** of a `Rhodium` instance.
+- `Rhodium` is **convertible to `Promise`**. Simply get the **`promise` property** of a `Rhodium` instance.
 > [!NOTE]
 > Conversion to `Promise` loses [cancelability](#cancellation) and other `Rhodium`-exclusive [features](#features).
 
@@ -72,7 +72,7 @@ setTimeout(() => myRhodium.cancel(), 500)
 
 > [!IMPORTANT]
 > - `cancel` [returns a `Rhodium`](#rhodiumonefinalized), but it is actually **synchronous** at its core. Once `cancel` is run, its effects are immediate.
-> - If `Rhodium` rejects right before cancellation, the reason might get supressed. If `Rhodium` rejects during cancellation, the reason gets caught into [the returned value](#rhodiumonefinalized).
+> - If `Rhodium` rejects right before cancellation, the reason might get suppressed. If `Rhodium` rejects during cancellation, the reason gets caught into [the returned value](#rhodiumonefinalized).
 
 In addition, [the described below limitation](#limitations) causes `cancel` to return a rejecting `Rhodium`, to preserve the [ease of handling errors](#error-tracking).
 
@@ -115,7 +115,7 @@ Rhodium
 > [!TIP]
 > Awaiting finalization could be useful, for example, to
 > - suspense starting new chains, that use the same non-shareable resource, held by the cancelling chain;
-> - check for supressed `cancel` errors, which one might want to rethrow;
+> - check for suppressed `cancel` errors, which one might want to rethrow;
 > - etc.
 
 > [!NOTE]

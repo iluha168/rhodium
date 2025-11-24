@@ -10,7 +10,10 @@ import * as TimeoutErrors from "./err/TimeoutErrors.mts"
 import { oneSettled } from "./settled.mts"
 import { oneFinalized, type RhodiumFinalizedResult } from "./finalized.mts"
 import { reject } from "./reject.mts"
-import { cancellableCallback } from "./internal/cancellableCallback.mts"
+import {
+	cancellableCallback,
+	type Cancelled,
+} from "./internal/cancellableCallback.mts"
 
 /**
  * A {@linkcode Promise} wrapper that adds syntax sugar.
@@ -26,7 +29,7 @@ export class Rhodium<
 	 * @param promise object to wrap.
 	 */
 	constructor(
-		promise: PromiseLike<R>,
+		promise: PromiseLike<R | typeof Cancelled>,
 	)
 	/**
 	 * Creates a new {@linkcode Rhodium}.
@@ -202,10 +205,10 @@ export class Rhodium<
 	/**
 	 * Nested {@linkcode Promise} object this {@linkcode Rhodium} was created with.
 	 */
-	get promise(): Promise<R> {
+	get promise(): Promise<R | typeof Cancelled> {
 		return this.#promise
 	}
-	#promise: Promise<R>
+	#promise: Promise<R | typeof Cancelled>
 
 	// -------------------------- Cancellation --------------------------
 
@@ -224,15 +227,17 @@ export class Rhodium<
 	#childrenAmount: number | null = 0
 
 	/**
-	 * Sets the {@linkcode child}'s parent field, and automatically unsets it
-	 * when the {@linkcode parent} has been fullfilled.
+	 * Sets the {@linkcode child}'s parent field, and automatically un-sets it
+	 * when the {@linkcode parent} has been fulfilled.
 	 *
 	 * Keeps track of children amount on the parent as well.
 	 */
 	private static attachChildToParent<PR, MR>(
 		child: Rhodium<any, any>,
 		parent: Rhodium<PR, any>,
-		attach: (newPromise: Promise<NoInfer<PR>>) => Promise<MR>,
+		attach: (
+			newPromise: Promise<NoInfer<PR | typeof Cancelled>>,
+		) => Promise<MR>,
 	): Promise<NoInfer<MR>> {
 		if (parent.#childrenAmount === null) {
 			throw new CancelErrors.CannotAttachConsumerError()

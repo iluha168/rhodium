@@ -8,5 +8,5 @@ import type { Merged } from "./terminology.d.mts"
 export function reject<const E1 = void>(
 	reason?: E1,
 ): Merged<Rhodium<never, E1>> {
-	return new Rhodium(Promise.reject(reason))
+	return new Rhodium<never, E1>(Promise.reject(reason))
 }

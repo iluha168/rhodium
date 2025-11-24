@@ -21,4 +21,5 @@ export {
 export { Try as try } from "./Rhodium/try.mts"
 export { tryGen } from "./Rhodium/tryGen.mts"
 export { sleep } from "./Rhodium/sleep.mts"
+export { Cancelled } from "./Rhodium/internal/cancellableCallback.mts"
 export { Rhodium, Rhodium as default } from "./Rhodium/index.mts"
