@@ -1,5 +1,5 @@
-import { Rhodium } from "./index.mts"
-import type { Merged } from "./terminology.d.mts"
+import { Rhodium } from "./Rhodium.mts"
+import type { Merged } from "./terminology.mts"
 
 /**
  * Creates a new rejected Rhodium for the provided reason.
@@ -8,5 +8,5 @@ import type { Merged } from "./terminology.d.mts"
 export function reject<const E1 = void>(
 	reason?: E1,
 ): Merged<Rhodium<never, E1>> {
-	return new Rhodium(Promise.reject(reason))
+	return new Rhodium<never, E1>(Promise.reject(reason))
 }

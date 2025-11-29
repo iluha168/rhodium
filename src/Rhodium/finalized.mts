@@ -1,7 +1,8 @@
-import { Rhodium } from "./index.mts"
+import { Rhodium } from "./Rhodium.mts"
 import { cancelAllWhenCancelled } from "./internal/cancelAllWhenCancelled.mts"
-import { oneSettled, type RhodiumSettledResult } from "./settled.mts"
-import type { Errored } from "./terminology.d.mts"
+import { Cancelled } from "./internal/cancellableCallback.mts"
+import type { RhodiumSettledResult } from "./settled.mts"
+import type { Errored } from "./terminology.mts"
 
 /**
  * The return type of a cancelled finalized {@link Rhodium}.
@@ -29,18 +30,17 @@ export type RhodiumFinalizedResult<R, E> =
 export function oneFinalized<const R, const E>(
 	rhodium: Rhodium<R, E>,
 ): Rhodium<RhodiumFinalizedResult<R, E>, never> {
-	// Detach from the input rhodium, do not block its cancellation
-	return oneSettled(new Rhodium<R, E>(rhodium.promise))
-		.then((settlementResult) =>
-			rhodium.cancelled
-				? {
-					status: "cancelled" as const,
-					...(settlementResult.reason
-						? { reason: settlementResult.reason }
-						: null),
-				} satisfies RhodiumCancelledResult<E>
-				: settlementResult
-		)
+	return new Rhodium(rhodium.promise
+		.then(
+			(data) =>
+				rhodium.cancelled || data === Cancelled
+					? { status: "cancelled" }
+					: { status: "fulfilled", value: data },
+			(err) => ({
+				status: rhodium.cancelled ? "cancelled" : "rejected",
+				reason: err,
+			}),
+		))
 }
 
 /**

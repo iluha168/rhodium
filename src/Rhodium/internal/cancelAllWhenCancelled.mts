@@ -1,4 +1,4 @@
-import type { Rhodium } from "../index.mts"
+import type { Rhodium } from "../Rhodium.mts"
 
 export function cancelAllWhenCancelled(
 	dependants: Rhodium<any, any>[],
