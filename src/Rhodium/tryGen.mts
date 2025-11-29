@@ -1,7 +1,7 @@
 import { Rhodium } from "./Rhodium.mts"
 import { reject } from "./reject.mts"
 import { resolve } from "./resolve.mts"
-import type { Errored, Merged } from "./terminology.d.mts"
+import type { Errored, Merged } from "./terminology.mts"
 
 /**
  * Resolves each Rhodium yielded by {@linkcode generator} one by one.

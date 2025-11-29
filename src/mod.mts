@@ -1,4 +1,4 @@
-export type * from "./Rhodium/terminology.d.mts"
+export type * from "./Rhodium/terminology.mts"
 export * as err from "./modErr.mts"
 
 export { withResolvers } from "./Rhodium/withResolvers.mts"

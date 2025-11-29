@@ -1,5 +1,5 @@
 import { Rhodium } from "./Rhodium.mts"
-import type { Merged, ToRhodium } from "./terminology.d.mts"
+import type { Merged, ToRhodium } from "./terminology.mts"
 
 /**
  * Takes a callback of any kind (returns or throws, synchronously or asynchronously) and wraps its result in a Rhodium.

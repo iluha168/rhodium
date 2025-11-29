@@ -1,6 +1,6 @@
 import { Rhodium } from "./Rhodium.mts"
 import { cancelAllWhenCancelled } from "./internal/cancelAllWhenCancelled.mts"
-import type { Errored } from "./terminology.d.mts"
+import type { Errored } from "./terminology.mts"
 
 /**
  * The return type of a successfully settled {@link Rhodium}.

@@ -2,7 +2,7 @@ import { Rhodium } from "./Rhodium.mts"
 import { cancelAllWhenCancelled } from "./internal/cancelAllWhenCancelled.mts"
 import { Cancelled } from "./internal/cancellableCallback.mts"
 import type { RhodiumSettledResult } from "./settled.mts"
-import type { Errored } from "./terminology.d.mts"
+import type { Errored } from "./terminology.mts"
 
 /**
  * The return type of a cancelled finalized {@link Rhodium}.

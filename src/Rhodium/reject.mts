@@ -1,5 +1,5 @@
 import { Rhodium } from "./Rhodium.mts"
-import type { Merged } from "./terminology.d.mts"
+import type { Merged } from "./terminology.mts"
 
 /**
  * Creates a new rejected Rhodium for the provided reason.

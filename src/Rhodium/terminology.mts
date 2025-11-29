@@ -1,5 +1,5 @@
 import type { Rhodium } from "./Rhodium.mts"
-import type { doesReduceTo } from "./internal/subtypeDetection.d.mts"
+import type { doesReduceTo } from "./internal/subtypeDetection.mts"
 
 /**
  * The same as the return type of {@linkcode Rhodium.resolve}:

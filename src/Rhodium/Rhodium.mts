@@ -3,8 +3,8 @@
  * The definition of {@linkcode Rhodium}.
  */
 
-import type { Errored, Merged, ToRhodium } from "./terminology.d.mts"
-import type { isExcludeUnsafe } from "./internal/subtypeDetection.d.mts"
+import type { Errored, Merged, ToRhodium } from "./terminology.mts"
+import type { isExcludeUnsafe } from "./internal/subtypeDetection.mts"
 import * as CancelErrors from "./err/CancelErrors.mts"
 import * as TimeoutErrors from "./err/TimeoutErrors.mts"
 import { oneSettled } from "./settled.mts"
