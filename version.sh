@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+git checkout main
+git merge --no-ff dev
+
 if ! [ -z $(git status --untracked-files=no --porcelain) ]; then
     echo "Git status is not clean" > /dev/stderr
     exit 1
