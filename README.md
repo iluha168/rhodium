@@ -37,6 +37,9 @@ import Rhodium from "rhodium" // Class
     - [`Rhodium.tryGen` - the `async` of Rhodium](#rhodiumtrygen---the-async-of-rhodium)
     - [`Rhodium.catchFilter`](#rhodiumcatchfilter)
     - [`Rhodium.timeout`](#rhodiumtimeout)
+    - [`new Rhodium`](#new-rhodium)
+      - [`new Rhodium(promiseOrRhodium)`](#new-rhodiumpromiseorrhodium)
+      - [`new Rhodium(executor)` - classic `Promise` constructor](#new-rhodiumexecutor---classic-promise-constructor)
   - [Error tracking](#error-tracking)
     - [The `Errored<T>` type](#the-erroredt-type)
 - [Inspired by](#inspired-by)
@@ -125,9 +128,18 @@ Rhodium
 
 On `cancel`, the currently running callback will not be stopped, and it will delay finalization. If the time it takes for a Rhodium to finalize is important, then it might be of interest to optimize this time.
 
-Every callback, attached by `then`, `catch`, etc. (except the non-cancellable `finally`) is provided an **`AbortSignal`** as the second argument, which is triggered when that callback has been running at the time of `cancel`. On signal, the callback should resolve as soon as possible.
+Every callback, attached by `then`, `catch`, etc. (except the non-cancellable `finally`), and the constructor, are provided an **`AbortSignal`** as the second argument, which is triggered when that callback has been running at the time of `cancel`. On signal, the callback should resolve as soon as possible.
 
 Using this signal is completely optional - it is only an optimization.
+
+Example:
+```ts
+const fetchRh = Rhodium.try(
+  (url, signal) => fetch(url, { signal })
+)
+
+fetchRh.cancel() // Aborts the network request!
+```
 
 ### Additional methods & syntax sugar
 #### `Rhodium.sleep`
@@ -215,6 +227,39 @@ Rhodium
   .timeout(10) // Uh oh, this rejects, sleep takes too long
   .finalized() // Resolves quickly, because sleep is cancelled!
 ```
+
+#### `new Rhodium`
+There are two ways to use the constructor:
+
+##### `new Rhodium(promiseOrRhodium)`
+This is identical to `Rhodium.resolve`, except it **always creates a new instance**. (When the input value is a `Rhodium`, `resolve` simply returns it.)
+
+##### `new Rhodium(executor)` - classic `Promise` constructor
+The Rhodium executor has an additional argument, [signal](#early-cancellation). For example, let us convert a pre-Promise-era asynchronous function, that allows cancellation, to a Rhodium:
+```ts
+new Rhodium((resolve, reject, signal) => {
+  try {
+    longOperation({
+      shouldStop: () => signal.aborted,
+      onComplete: resolve,
+      onError: reject,
+    })
+  } catch(e) {
+    reject(e)
+  }
+})
+```
+> [!TIP]
+> If you need to [`cancel`](#cancellation) the new `Rhodium` from inside its executor, you can do so by assigning it to a variable:
+> ```ts
+> const myNewRhodium = new Rhodium((resolve, reject, signal) => {
+>   /* ... */
+>   myCancelTrigger.addEventListener('stop',
+>     () => myNewRhodium.cancel()
+>   )
+> })
+> ```
+> Just make sure you are not attempting to use the variable before the Rhodium was instantiated.
 
 ### Error tracking
 Rhodium keeps track of all errors a `Rhodium` chain may reject with, if used correctly.

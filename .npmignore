@@ -1,7 +1,3 @@
-node_modules
-.vscode
-src
-test
-deno.json
-deno.lock
-.github
+*
+
+!dist/**
