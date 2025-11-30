@@ -1,4 +1,4 @@
-export type * from "./Rhodium/terminology.d.mts"
+export type * from "./Rhodium/terminology.mts"
 export * as err from "./modErr.mts"
 
 export { withResolvers } from "./Rhodium/withResolvers.mts"
@@ -21,4 +21,5 @@ export {
 export { Try as try } from "./Rhodium/try.mts"
 export { tryGen } from "./Rhodium/tryGen.mts"
 export { sleep } from "./Rhodium/sleep.mts"
-export { Rhodium, Rhodium as default } from "./Rhodium/index.mts"
+export { Cancelled } from "./Rhodium/internal/cancellableCallback.mts"
+export { Rhodium, Rhodium as default } from "./Rhodium/Rhodium.mts"

@@ -25,8 +25,6 @@ import Rhodium from "rhodium" // Class
 - [Table of contents](#table-of-contents)
 - [Interoperability with `Promise`](#interoperability-with-promise)
 - [Features](#features)
-  - [Error tracking](#error-tracking)
-    - [The `Errored<T>` type](#the-erroredt-type)
   - [Cancellation](#cancellation)
     - [Limitations](#limitations)
     - [But what about multiple `then` calls on a single Rhodium?](#but-what-about-multiple-then-calls-on-a-single-rhodium)
@@ -39,77 +37,21 @@ import Rhodium from "rhodium" // Class
     - [`Rhodium.tryGen` - the `async` of Rhodium](#rhodiumtrygen---the-async-of-rhodium)
     - [`Rhodium.catchFilter`](#rhodiumcatchfilter)
     - [`Rhodium.timeout`](#rhodiumtimeout)
+    - [`new Rhodium`](#new-rhodium)
+      - [`new Rhodium(promiseOrRhodium)`](#new-rhodiumpromiseorrhodium)
+      - [`new Rhodium(executor)` - classic `Promise` constructor](#new-rhodiumexecutor---classic-promise-constructor)
+  - [Error tracking](#error-tracking)
+    - [The `Errored<T>` type](#the-erroredt-type)
 - [Inspired by](#inspired-by)
 
 ## Interoperability with `Promise`
 - `Rhodium` **is awaitable** at runtime, and `Awaited<T>` can be used to await it in types.
 - `Promise`, or any `PromiseLike`, **can be converted to `Rhodium`** by passing it to `Rhodium.resolve()` or `new Rhodium()`
-- Is **convertable to `Promise`**. Simply get the **`promise` property** of a `Rhodium` instance.
+- `Rhodium` is **convertible to `Promise`**. Simply get the **`promise` property** of a `Rhodium` instance.
 > [!NOTE]
 > Conversion to `Promise` loses [cancelability](#cancellation) and other `Rhodium`-exclusive [features](#features).
 
 ## Features
-### Error tracking
-Rhodium keeps track of all errors a `Rhodium` chain may reject with, if used correctly.
-```ts
-Rhodium
-  .try(
-    chance => chance > 0.5
-      ? "success"
-      : Rhodium.reject("error"),
-    Math.random(),
-  )
-  .then(data => data /* <? "success" */)
-  .catch(e => e /* <? "error" */ )
-  .then(data => data /* <? "success" | "error" */)
-```
-
-> [!CAUTION]
-> This library assumes `throw` keyword is never used. **It is impossible to track types of `throw` errors.** `Rhodium` has a neverthrow philosophy; you must always use `Rhodium.reject()` instead. I suggest enforcing this rule if you decide to adopt `Rhodium`.
-
-
-> [!CAUTION]
-> All errors must be structurally distinct:
-> - ❌ `new SyntaxError` ≈ `new TypeError`
-> - ✔️ `class ErrA { code = 1 as const }` ≉ `class ErrB { code = 2 as const }`
->
-> This is a TypeScript limitation. Any object containing another triggers a subtype reduction. Usually this object would be constructed by `Rhodium.reject()`, but this does work for everything, e.g., arrays:
-> ```ts
-> class ErrorA extends Error {}
-> class ErrorB extends Error {}
->    // ▼? const result: ErrorA[]
-> const result = Math.random() > 0.5
->   ? [new ErrorA()]
->   : [new ErrorB()]
-> ```
-
-> [!IMPORTANT]
-> Other **`PromiseLike`** objects returned inside the chain automatically change the **error type to `unknown`**. We can never be sure what type they reject, if any. This includes **`async` callbacks**, as they always return `Promise`s.
-
-#### The `Errored<T>` type
-Similarly to `Awaited<T>`, which returns the resolution type,
-`Errored<T>` returns the error type.
-```ts
-const promise = Promise.reject()
-type E = Errored<typeof promise>
-//   ^? unknown
-```
-```ts
-const promise = Rhodium.resolve()
-type E = Errored<typeof promise>
-//   ^? never
-```
-```ts
-const promise = Rhodium.reject()
-type E = Errored<typeof promise>
-//   ^? void
-```
-```ts
-const promise = Rhodium.reject(new TypeError())
-type E = Errored<typeof promise>
-//   ^? TypeError
-```
-
 ### Cancellation
 Cancellation prevents any further callbacks from running.
 > [!IMPORTANT]
@@ -133,7 +75,7 @@ setTimeout(() => myRhodium.cancel(), 500)
 
 > [!IMPORTANT]
 > - `cancel` [returns a `Rhodium`](#rhodiumonefinalized), but it is actually **synchronous** at its core. Once `cancel` is run, its effects are immediate.
-> - If `Rhodium` rejects right before cancellation, the reason might get supressed. If `Rhodium` rejects during cancellation, the reason gets caught into [the returned value](#rhodiumonefinalized).
+> - If `Rhodium` rejects right before cancellation, the reason might get suppressed. If `Rhodium` rejects during cancellation, the reason gets caught into [the returned value](#rhodiumonefinalized).
 
 In addition, [the described below limitation](#limitations) causes `cancel` to return a rejecting `Rhodium`, to preserve the [ease of handling errors](#error-tracking).
 
@@ -176,7 +118,7 @@ Rhodium
 > [!TIP]
 > Awaiting finalization could be useful, for example, to
 > - suspense starting new chains, that use the same non-shareable resource, held by the cancelling chain;
-> - check for supressed `cancel` errors, which one might want to rethrow;
+> - check for suppressed `cancel` errors, which one might want to rethrow;
 > - etc.
 
 > [!NOTE]
@@ -186,9 +128,18 @@ Rhodium
 
 On `cancel`, the currently running callback will not be stopped, and it will delay finalization. If the time it takes for a Rhodium to finalize is important, then it might be of interest to optimize this time.
 
-Every callback, attached by `then`, `catch`, etc. (except the non-cancellable `finally`) is provided an **`AbortSignal`** as the second argument, which is triggered when that callback has been running at the time of `cancel`. On signal, the callback should resolve as soon as possible.
+Every callback, attached by `then`, `catch`, etc. (except the non-cancellable `finally`), and the constructor, are provided an **`AbortSignal`** as the second argument, which is triggered when that callback has been running at the time of `cancel`. On signal, the callback should resolve as soon as possible.
 
 Using this signal is completely optional - it is only an optimization.
+
+Example:
+```ts
+const fetchRh = Rhodium.try(
+  (url, signal) => fetch(url, { signal })
+)
+
+fetchRh.cancel() // Aborts the network request!
+```
 
 ### Additional methods & syntax sugar
 #### `Rhodium.sleep`
@@ -275,6 +226,100 @@ Rhodium
   .sleep(10000)
   .timeout(10) // Uh oh, this rejects, sleep takes too long
   .finalized() // Resolves quickly, because sleep is cancelled!
+```
+
+#### `new Rhodium`
+There are two ways to use the constructor:
+
+##### `new Rhodium(promiseOrRhodium)`
+This is identical to `Rhodium.resolve`, except it **always creates a new instance**. (When the input value is a `Rhodium`, `resolve` simply returns it.)
+
+##### `new Rhodium(executor)` - classic `Promise` constructor
+The Rhodium executor has an additional argument, [signal](#early-cancellation). For example, let us convert a pre-Promise-era asynchronous function, that allows cancellation, to a Rhodium:
+```ts
+new Rhodium((resolve, reject, signal) => {
+  try {
+    longOperation({
+      shouldStop: () => signal.aborted,
+      onComplete: resolve,
+      onError: reject,
+    })
+  } catch(e) {
+    reject(e)
+  }
+})
+```
+> [!TIP]
+> If you need to [`cancel`](#cancellation) the new `Rhodium` from inside its executor, you can do so by assigning it to a variable:
+> ```ts
+> const myNewRhodium = new Rhodium((resolve, reject, signal) => {
+>   /* ... */
+>   myCancelTrigger.addEventListener('stop',
+>     () => myNewRhodium.cancel()
+>   )
+> })
+> ```
+> Just make sure you are not attempting to use the variable before the Rhodium was instantiated.
+
+### Error tracking
+Rhodium keeps track of all errors a `Rhodium` chain may reject with, if used correctly.
+```ts
+Rhodium
+  .try(
+    chance => chance > 0.5
+      ? "success"
+      : Rhodium.reject("error"),
+    Math.random(),
+  )
+  .then(data => data /* <? "success" */)
+  .catch(e => e /* <? "error" */ )
+  .then(data => data /* <? "success" | "error" */)
+```
+
+> [!CAUTION]
+> This library assumes `throw` keyword is never used. **It is impossible to track types of `throw` errors.** `Rhodium` has a neverthrow philosophy; you must always use `Rhodium.reject()` instead. I suggest enforcing this rule if you decide to adopt `Rhodium`.
+
+
+> [!CAUTION]
+> All errors must be structurally distinct:
+> - ❌ `new SyntaxError` ≈ `new TypeError`
+> - ✔️ `class ErrA { code = 1 as const }` ≉ `class ErrB { code = 2 as const }`
+>
+> This is a TypeScript limitation. Any object containing another triggers a subtype reduction. Usually this object would be constructed by `Rhodium.reject()`, but this does work for everything, e.g., arrays:
+> ```ts
+> class ErrorA extends Error {}
+> class ErrorB extends Error {}
+>    // ▼? const result: ErrorA[]
+> const result = Math.random() > 0.5
+>   ? [new ErrorA()]
+>   : [new ErrorB()]
+> ```
+
+> [!IMPORTANT]
+> Other **`PromiseLike`** objects returned inside the chain automatically change the **error type to `unknown`**. We can never be sure what type they reject, if any. This includes **`async` callbacks**, as they always return `Promise`s.
+
+#### The `Errored<T>` type
+Similarly to `Awaited<T>`, which returns the resolution type,
+`Errored<T>` returns the error type.
+```ts
+const promise = Promise.reject()
+type E = Errored<typeof promise>
+//   ^? unknown
+```
+```ts
+const promise = Rhodium.resolve()
+type E = Errored<typeof promise>
+//   ^? never
+```
+```ts
+const promise = Rhodium.reject()
+type E = Errored<typeof promise>
+//   ^? void
+```
+```ts
+const promise = Rhodium.reject(new TypeError())
+type E = Errored<typeof promise>
+//   ^? TypeError
 ```
 
 ## Inspired by

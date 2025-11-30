@@ -1,4 +1,4 @@
-import { Rhodium } from "./index.mts"
+import { Rhodium } from "./Rhodium.mts"
 
 /**
  * Creates a Rhodium that will be resolved in {@linkcode ms} milliseconds.

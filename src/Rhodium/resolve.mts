@@ -1,5 +1,5 @@
-import { Rhodium } from "./index.mts"
-import type { Merged, ToRhodium } from "./terminology.d.mts"
+import { Rhodium } from "./Rhodium.mts"
+import type { Merged, ToRhodium } from "./terminology.mts"
 
 /**
  * {@link ToRhodium Converts any value to a Rhodium}.
