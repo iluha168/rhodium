@@ -25,7 +25,7 @@
 		"AbortController"
 	],
 	"type": "module",
-	"main": "dist/mod.mjs",
+	"main": "dist/mod.cjs",
 	"types": "dist/mod.d.mts",
 	"scripts": {
 		"test": "deno check test && deno test --parallel",
@@ -36,7 +36,7 @@
 		"fmt:watch": "npm run fmt -- --watch",
 		"check": "npm run fmt:check && deno lint && npm run test && deno publish --allow-dirty --dry-run",
 		"clean": "rm -rf dist",
-		"build": "npm run clean && tsc && esbuild --bundle --minify --format=esm --platform=node --target=node24 src/mod.mts --outfile=dist/mod.mjs",
+		"build": "npm run clean && tsc && esbuild --bundle --minify --format=cjs --platform=node --target=node20 src/mod.mts --outfile=dist/mod.cjs",
 		"prepublishOnly": "npm run check && npm run build"
 	},
 	"devDependencies": {
