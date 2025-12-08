@@ -21,4 +21,4 @@ if ! [ -z $(git status --untracked-files=no --porcelain) ]; then
     exit 1
 fi
 git checkout dev
-git merge --no-ff main
+git merge --ff main
