@@ -1,6 +1,6 @@
 {
 	"name": "@iluha168/rhodium",
-	"version": "0.6.1-cjs.0",
+	"version": "0.6.2-cjs.0",
 	"license": "MIT",
 	"exports": "./src/mod.mts",
 	"publish": {
