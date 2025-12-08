@@ -1,5 +1,6 @@
-import { Rhodium } from "./Rhodium.mts"
-import { cancelAllWhenCancelled } from "./internal/cancelAllWhenCancelled.mts"
+import type { Rhodium } from "./Rhodium.mts"
+import { consumeMany } from "./internal/consumeMany.mts"
+import { resolve } from "./resolve.mts"
 import type { Errored } from "./terminology.mts"
 
 /**
@@ -37,34 +38,33 @@ export function oneSettled<const R, const E>(
 	)
 }
 
+type AllSettled<Ps extends readonly Rhodium<any, any>[]> = {
+	-readonly [P in keyof Ps]: RhodiumSettledResult<
+		Awaited<Ps[P]>,
+		Errored<Ps[P]>
+	>
+}
+
 /**
  * Creates a Rhodium that is
  * resolved with an array of results when all of the provided values resolve or reject.
  */
-export function allSettled<const Ps extends Rhodium<any, any>[] | []>(
+export function allSettled<const Ps extends readonly Rhodium<any, any>[]>(
 	values: Ps,
-): Rhodium<
-	{
-		-readonly [P in keyof Ps]: RhodiumSettledResult<
-			Awaited<Ps[P]>,
-			Errored<Ps[P]>
-		>
-	},
-	never
-> {
-	return new Rhodium<any, any>((resolve, _, signal) => {
-		const settlements: RhodiumSettledResult<any, any>[] = []
-		if (!values.length) return resolve(settlements)
-		let totalSettled = 0
-		cancelAllWhenCancelled(
-			values.map((rhodium, i) =>
-				oneSettled(rhodium).then((settlement) => {
-					settlements[i] = settlement
-					if (++totalSettled >= values.length) resolve(settlements)
-				})
-			),
-			{ signal },
-		)
-		signal.addEventListener("abort", resolve)
-	}) as ReturnType<typeof allSettled<Ps>>
+): Rhodium<AllSettled<Ps>, never> {
+	const settlements = [] as AllSettled<Ps>
+	let totalSettled = 0
+	if (!values.length) {
+		return resolve(settlements) as ReturnType<typeof allSettled<Ps>>
+	}
+	return consumeMany(
+		values.map(oneSettled),
+		(resolve, i, settlement) => {
+			settlements[i] = settlement
+			if (++totalSettled >= values.length) resolve(settlements)
+		},
+		// This will never be called because oneSettled never rejects
+		// deno-coverage-ignore
+		() => 0,
+	)
 }
