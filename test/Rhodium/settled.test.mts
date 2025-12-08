@@ -98,3 +98,27 @@ Deno.test("settled rejected", async () => {
 	const rejected = await Rhodium.reject(4).settled()
 	assertEquals(rejected, { status: "rejected", reason: 4 })
 })
+
+Deno.test("does not cancel other Rhodiums on reject", async () => {
+	const sleepLong = Rhodium.sleep(200)
+	const sleepShort = Rhodium.sleep(50).then(Rhodium.reject)
+
+	const actuallySleptLong = timed(() => sleepLong.finalized())
+	const actuallySleptShort = timed(() => sleepShort.finalized())
+
+	await Rhodium.allSettled([sleepLong, sleepShort])
+	assertAlmostEquals(await actuallySleptShort, 50, 20)
+	assertAlmostEquals(await actuallySleptLong, 200, 20)
+})
+
+Deno.test("does not cancel other Rhodiums on resolve", async () => {
+	const sleepLong = Rhodium.sleep(200)
+	const sleepShort = Rhodium.sleep(50)
+
+	const actuallySleptLong = timed(() => sleepLong.finalized())
+	const actuallySleptShort = timed(() => sleepShort.finalized())
+
+	await Rhodium.allSettled([sleepLong, sleepShort])
+	assertAlmostEquals(await actuallySleptShort, 50, 20)
+	assertAlmostEquals(await actuallySleptLong, 200, 20)
+})

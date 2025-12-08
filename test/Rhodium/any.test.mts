@@ -57,3 +57,27 @@ Deno.test("cancellable", async () => {
 	assertAlmostEquals(await timed(() => rhodium.cancel()), 0, 10)
 	assertEquals(store, 3)
 })
+
+Deno.test("does not cancel other Rhodiums on reject", async () => {
+	const sleepLong = Rhodium.sleep(200)
+	const sleepShort = Rhodium.sleep(50).then(Rhodium.reject)
+
+	const actuallySleptLong = timed(() => sleepLong.finalized())
+	const actuallySleptShort = timed(() => sleepShort.finalized())
+
+	await Rhodium.any([sleepLong, sleepShort])
+	assertAlmostEquals(await actuallySleptShort, 50, 5)
+	assertAlmostEquals(await actuallySleptLong, 200, 5)
+})
+
+Deno.test("cancels other Rhodiums on resolve", async () => {
+	const sleepLong = Rhodium.sleep(200)
+	const sleepShort = Rhodium.sleep(50)
+
+	const actuallySleptLong = timed(() => sleepLong.finalized())
+	const actuallySleptShort = timed(() => sleepShort.finalized())
+
+	await Rhodium.any([sleepLong, sleepShort])
+	assertAlmostEquals(await actuallySleptShort, 50, 5)
+	assertAlmostEquals(await actuallySleptLong, 50, 5)
+})
