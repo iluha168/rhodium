@@ -1,6 +1,6 @@
 {
 	"imports": {
 		"@/": "../src/",
-		"assert": "jsr:@std/assert@^1.0.15"
+		"@std/assert": "jsr:@std/assert@^1.0.15"
 	}
 }

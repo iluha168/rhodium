@@ -1,4 +1,4 @@
-import { assertAlmostEquals, assertEquals, assertRejects } from "assert"
+import { assertAlmostEquals, assertEquals, assertRejects } from "@std/assert"
 import type Rh from "@/mod.mts"
 import * as Rhodium from "@/mod.mts"
 import { timed } from "../util/timed.ts"
