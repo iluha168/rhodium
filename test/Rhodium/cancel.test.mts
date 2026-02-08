@@ -88,3 +88,12 @@ Deno.test("recursive", async () => {
 	const elapsed = await timed(() => rhodium.cancel())
 	assertAlmostEquals(elapsed, 300, 15)
 })
+
+Deno.test("nested", async () => {
+	const task = Rhodium
+		.try(() => true)
+		.then(() => Rhodium.sleep(100))
+
+	await Rhodium.sleep(20)
+	task.cancel()
+})

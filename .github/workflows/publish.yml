@@ -24,7 +24,7 @@ jobs:
             # Deno
             - uses: denoland/setup-deno@v2
               with:
-                  deno-version: vx.x.x
+                  deno-version: v2.6.6
 
             - run: npm run prepublishOnly
             # Publishing

@@ -22,6 +22,7 @@ export function cancellableCallback<D extends unknown, P>(
 			// Callbacks recursively unwrap Promises and Rhodiums
 			// In the case of Rhodiums, we have to recursively cancel as well
 			signal.addEventListener("abort", () => result.cancel())
+			return result.promise as P
 		}
 		return result
 	})
