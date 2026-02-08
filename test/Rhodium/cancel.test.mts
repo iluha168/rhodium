@@ -3,7 +3,7 @@ import {
 	assertEquals,
 	assertRejects,
 	assertThrows,
-} from "assert"
+} from "@std/assert"
 import * as Rhodium from "@/mod.mts"
 import { timed } from "../util/timed.ts"
 
@@ -87,4 +87,13 @@ Deno.test("recursive", async () => {
 	await Rhodium.sleep(50)
 	const elapsed = await timed(() => rhodium.cancel())
 	assertAlmostEquals(elapsed, 300, 15)
+})
+
+Deno.test("nested", async () => {
+	const task = Rhodium
+		.try(() => true)
+		.then(() => Rhodium.sleep(100))
+
+	await Rhodium.sleep(20)
+	task.cancel()
 })

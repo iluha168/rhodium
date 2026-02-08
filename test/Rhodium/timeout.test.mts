@@ -1,6 +1,6 @@
 import Rh from "@/mod.mts"
 import * as Rhodium from "@/mod.mts"
-import { assertAlmostEquals, assertEquals, assertRejects } from "assert"
+import { assertAlmostEquals, assertEquals, assertRejects } from "@std/assert"
 
 Deno.test("no timeout, synchronous", async () => {
 	await Rhodium

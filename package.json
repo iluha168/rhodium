@@ -28,7 +28,7 @@
 	"main": "dist/mod.mjs",
 	"types": "dist/mod.d.mts",
 	"scripts": {
-		"test": "NO_COLOR=1 deno check test 2>/dev/null && NO_COLOR=1 deno test --parallel --coverage 2>/dev/null | tail -n1 | cut -d'|' -f4 | grep -q 100.0",
+		"test": "deno test --parallel --coverage | tail -n1 | cut -d'|' -f4 | grep -q 100.0",
 		"lint": "deno lint",
 		"lint:watch": "deno lint --watch --fix",
 		"fmt": "deno fmt",
